@@ -1,5 +1,133 @@
+version: '3.8'
+
 services:
-  # Base de datos MySQL
+  # Nginx - Proxy Reverso
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: anb-nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./storage:/storage:ro
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - api
+    networks:
+      - anb-network
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis - Message Broker
+  redis:
+    image: redis:7-alpine
+    container_name: anb-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - anb-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Celery Worker - CORREGIDO (comando en una línea)
+  celery_worker:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: anb-celery-worker
+    restart: unless-stopped
+    command: celery -A app.workers.celery_app:celery_app worker --loglevel=info --concurrency=2 --queues=video_processing,maintenance --hostname=worker@%h
+    environment:
+      - DATABASE_URL=mysql+aiomysql://ANBAdmin:ANB12345@mysql-db:3306/anb_rising_stars
+      - REDIS_URL=redis://redis:6379/0
+      - PYTHONPATH=/app
+    volumes:
+      - ./storage:/storage
+      - ./logs:/app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+      mysql-db:
+        condition: service_healthy
+    networks:
+      - anb-network
+    healthcheck:
+      test: ["CMD", "celery", "-A", "app.workers.celery_app:celery_app", "inspect", "ping", "-d", "worker@%h"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Celery Beat - CORREGIDO (comando en una línea)
+  celery_beat:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: anb-celery-beat
+    restart: unless-stopped
+    command: celery -A app.workers.celery_app:celery_app beat --loglevel=info --schedule=/tmp/celerybeat-schedule
+    environment:
+      - DATABASE_URL=mysql+aiomysql://ANBAdmin:ANB12345@mysql-db:3306/anb_rising_stars
+      - REDIS_URL=redis://redis:6379/0
+      - PYTHONPATH=/app
+    volumes:
+      - ./storage:/storage
+      - ./logs:/app/logs
+      - celery_beat_data:/tmp
+    depends_on:
+      redis:
+        condition: service_healthy
+      mysql-db:
+        condition: service_healthy
+    networks:
+      - anb-network
+
+  # API FastAPI
+  api:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: anb-api
+    restart: unless-stopped
+    expose:
+      - "8000"
+    environment:
+      - DATABASE_URL=mysql+aiomysql://ANBAdmin:ANB12345@mysql-db:3306/anb_rising_stars
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ./storage:/storage
+      - ./logs:/app/logs
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "python scripts/wait_for_db.py &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
+    networks:
+      - anb-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MySQL Database
   mysql-db:
     image: mysql:8.0
     container_name: anb-mysql
@@ -20,36 +148,18 @@ services:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --innodb_buffer_pool_size=256M
+    networks:
+      - anb-network
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uANBAdmin", "-pANB12345"]
       timeout: 20s
       retries: 10
 
-  # API FastAPI
-  api:
-    build: 
-      context: .
-      dockerfile: Dockerfile
-    container_name: anb-api
-    restart: unless-stopped
-    ports:
-      - "8000:8000"
-    environment:
-      - DATABASE_URL=mysql+aiomysql://ANBAdmin:ANB12345@mysql-db:3306/anb_rising_stars
-    volumes:
-      - ./storage:/app/storage
-      - ./logs:/app/logs
-    depends_on:
-      mysql-db:
-        condition: service_healthy
-    command: >
-      sh -c "python scripts/wait_for_db.py &&
-             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
 volumes:
   mysql_data:
+  redis_data:
+  celery_beat_data:
+
+networks:
+  anb-network:
+    driver: bridge

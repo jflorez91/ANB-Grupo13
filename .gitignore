@@ -98,3 +98,7 @@ yarn-error.log
 # --- FastAPI-specific (si usas Uvicorn) ---
 # Evitar incluir archivos generados por el servidor o auto reload
 *.pid
+
+# --- Storage (evitar subir videos y archivos procesados) ---
+/storage/processed/
+/storage/uploads/
