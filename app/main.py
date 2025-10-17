@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import logging
 from app.config.settings import settings
 from app.api.routes.auth import router as auth_router
+from app.api.routes.videos import router as videos_router
 
 # Configurar logging
 logging.basicConfig(
@@ -29,6 +30,7 @@ app.add_middleware(
 
 # Routers
 app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(videos_router, prefix="/api/videos", tags=["Videos"])
 
 @app.get("/")
 async def root():
