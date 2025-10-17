@@ -21,15 +21,15 @@ class Settings(BaseSettings):
     
     # File Storage
     UPLOAD_DIR: str = "/storage/uploads"
-    PROCESSED_DIR: str = "storage/processed"
-    MAX_FILE_SIZE: int = 500 * 1024 * 1024  # 500MB
-    ALLOWED_EXTENSIONS: List[str] = ["mp4", "avi", "mov", "mkv"]
+    PROCESSED_DIR: str = "/storage/processed"
+    MAX_FILE_SIZE: int = 100 * 1024 * 1024  # 100MB
+    ALLOWED_EXTENSIONS: List[str] = ["mp4"]
     
     # CORS
     ALLOWED_HOSTS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000","http://localhost:8000"]
     
     # Video Processing
-    MAX_VIDEO_DURATION: int = 300  # 5 minutos máximo original
+    MAX_VIDEO_DURATION: int = 480  # 5 minutos máximo original
     TARGET_DURATION: int = 30      # 30 segundos procesado
     TARGET_RESOLUTION: str = "1280x720"
     

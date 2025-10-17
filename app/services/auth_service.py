@@ -127,38 +127,39 @@ class AuthService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error interno del servidor: {str(e)}"
             )
+    
 
     async def authenticate_user(self, email: str, password: str):
         """CASO DE USO: Autenticar usuario"""
-        
+
         try:
             logger.info(f"Intentando autenticar usuario: {email}")
-            
+
             # 1. Buscar usuario
             result = await self.db.execute(
                 select(User).where(User.email == email)
             )
             user = result.scalar_one_or_none()
-            
+
             if not user:
                 logger.warning(f"Usuario no encontrado: {email}")
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Credenciales incorrectas"
+                    status_code=status.HTTP_401_UNAUTHORIZED,  # ✅ Cambiado a 401
+                    detail="Credenciales inválidas"
                 )
 
             # 2. Verificar contraseña
             if not security_core.verify_password(password, user.password_hash):
                 logger.warning(f"Contraseña incorrecta para usuario: {email}")
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Credenciales incorrectas"
+                    status_code=status.HTTP_401_UNAUTHORIZED,  # ✅ Cambiado a 401
+                    detail="Credenciales inválidas"
                 )
 
             if not user.activo:
                 logger.warning(f"Usuario inactivo: {email}")
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
+                    status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Usuario inactivo"
                 )
 

@@ -1,141 +1,152 @@
 import os
-import subprocess
 import logging
+from datetime import datetime
 from celery import current_task
 from app.workers.celery_app import celery_app
+from app.workers.video_processing import process_video_sync
+
+# Importaciones SÍNCRONAS para base de datos
+from sqlalchemy import create_engine, update
+from sqlalchemy.orm import sessionmaker
 from app.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
-def process_video_with_ffmpeg(video_id: str) -> str:
-    """
-    Procesa el video usando FFmpeg - Función helper normal
-    """
-    # En una implementación real, obtendríamos la ruta del video de la base de datos
-    input_path = f"/storage/uploads/videos/originales/{video_id}.mp4"
-    output_path = f"/storage/processed/videos/{video_id}_processed.mp4"
-    
-    # Crear directorio de salida si no existe
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    
-    # Comando FFmpeg para procesar el video
-    cmd = [
-        'ffmpeg',
-        '-i', input_path,
-        '-t', str(settings.TARGET_DURATION),  # Recortar a 30 segundos
-        '-s', settings.TARGET_RESOLUTION,     # Ajustar resolución
-        '-c:v', 'libx264',                    # Codec de video
-        '-c:a', 'aac',                        # Codec de audio
-        '-preset', 'medium',
-        '-crf', '23',
-        output_path
-    ]
-    
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        logger.info(f"FFmpeg procesó video {video_id} exitosamente")
-        return output_path
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Error en FFmpeg: {e.stderr}")
-        raise Exception(f"Error procesando video con FFmpeg: {e.stderr}")
+# Configuración de base de datos SÍNCRONA
+sync_engine = create_engine(settings.DATABASE_URL.replace('aiomysql', 'pymysql'))
+SyncSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
 
-def add_anb_logo(video_path: str) -> str:
-    """
-    Añade el logo ANB al video - Función helper normal
-    """
-    output_path = video_path.replace('_processed', '_final')
-    logo_path = "/storage/assets/logo_anb.png"
-    
-    # Verificar si el logo existe
-    if not os.path.exists(logo_path):
-        logger.warning(f"Logo no encontrado en {logo_path}, saltando añadir logo")
-        return video_path
-    
-    # Comando para añadir logo (simplificado)
-    cmd = [
-        'ffmpeg',
-        '-i', video_path,
-        '-i', logo_path,
-        '-filter_complex', '[0:v][1:v]overlay=10:10',  # Logo en esquina superior izquierda
-        '-c:a', 'copy',
-        output_path
-    ]
-    
-    try:
-        subprocess.run(cmd, capture_output=True, check=True)
-        # Eliminar archivo temporal
-        if os.path.exists(video_path):
-            os.remove(video_path)
-        return output_path
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Error añadiendo logo: {e.stderr}")
-        return video_path  # Retornar sin logo si hay error
+def update_video_estado_sync(video_id: str, estado: str):
+    """Actualizar estado del video - SÍNCRONO"""
+    with SyncSessionLocal() as session:
+        from app.schemas.video import Video
+        session.execute(
+            update(Video)
+            .where(Video.id == video_id)
+            .values(estado=estado)
+        )
+        session.commit()
 
-@celery_app.task(bind=True, max_retries=3, soft_time_limit=250)
-def process_video_task(self, video_id: str):
-    """
-    Tarea Celery para procesar un video asíncronamente
-    """
-    try:
-        logger.info(f"Iniciando procesamiento de video {video_id}")
-        
-        # Fase 1: Validación
-        self.update_state(
-            state='PROGRESS',
-            meta={'current': 25, 'total': 100, 'status': 'Validando video'}
-        )
-        
-        # Verificar que el archivo de entrada existe
-        input_path = f"/storage/uploads/videos/originales/{video_id}.mp4"
-        if not os.path.exists(input_path):
-            raise FileNotFoundError(f"Video original no encontrado: {input_path}")
-        
-        # Fase 2: Procesamiento con FFmpeg
-        self.update_state(
-            state='PROGRESS',
-            meta={'current': 50, 'total': 100, 'status': 'Procesando video'}
-        )
-        
-        processed_path = process_video_with_ffmpeg(video_id)
-        
-        # Fase 3: Añadir logo
-        self.update_state(
-            state='PROGRESS',
-            meta={'current': 75, 'total': 100, 'status': 'Aplicando logo ANB'}
-        )
-        
-        final_path = add_anb_logo(processed_path)
-        
-        # Fase 4: Finalización
-        self.update_state(
-            state='PROGRESS', 
-            meta={'current': 100, 'total': 100, 'status': 'Finalizando'}
-        )
-        
-        logger.info(f"Procesamiento completado para video {video_id}")
-        return {
-            'video_id': video_id,
-            'status': 'completed',
-            'processed_path': final_path,
-            'message': 'Video procesado exitosamente'
+def update_procesamiento_estado_sync(video_id: str, estado: str, intentos: int, 
+                                   fecha_inicio: datetime = None, fecha_fin: datetime = None, 
+                                   error_message: str = None):
+    """Actualizar estado del procesamiento - SÍNCRONO"""
+    with SyncSessionLocal() as session:
+        from app.schemas.procesamiento_video import ProcesamientoVideo
+        update_data = {
+            "estado": estado,
+            "intentos": intentos
         }
         
+        if fecha_inicio:
+            update_data["fecha_inicio"] = fecha_inicio
+        if fecha_fin:
+            update_data["fecha_fin"] = fecha_fin
+        if error_message:
+            update_data["error_message"] = error_message
+            
+        session.execute(
+            update(ProcesamientoVideo)
+            .where(ProcesamientoVideo.video_id == video_id)
+            .values(**update_data)
+        )
+        session.commit()
+
+def update_video_procesado_sync(video_id: str, archivo_procesado: str, 
+                              duracion_procesada: int, resolucion_procesada: str):
+    """Actualizar video procesado - SÍNCRONO"""
+    with SyncSessionLocal() as session:
+        from app.schemas.video import Video
+        session.execute(
+            update(Video)
+            .where(Video.id == video_id)
+            .values(
+                estado="procesado",
+                archivo_procesado=archivo_procesado,
+                duracion_procesada=duracion_procesada,
+                resolucion_procesada=resolucion_procesada,
+                fecha_procesamiento=datetime.utcnow()
+            )
+        )
+        session.commit()
+
+@celery_app.task(bind=True, max_retries=3, soft_time_limit=300)
+def process_video_task(self, video_id: str):
+    """
+    Tarea Celery para procesar un video - VERSIÓN SÍNCRONA DEFINITIVA
+    """
+    try:
+        logger.info(f"🎬 Iniciando procesamiento de video {video_id}")
+        
+        # 1. ACTUALIZAR ESTADOS A "procesando"
+        update_video_estado_sync(video_id, "procesando")
+        update_procesamiento_estado_sync(
+            video_id, "procesando", 1, 
+            fecha_inicio=datetime.utcnow()
+        )
+        
+        # 2. PROCESAR VIDEO (SÍNCRONO)
+        def progress_callback(state, meta):
+            self.update_state(state=state, meta=meta)
+        
+        result = process_video_sync(video_id, progress_callback)
+        
+        # 3. VERIFICAR RESULTADO
+        if result['success']:
+            # ✅ ÉXITO - Actualizar como procesado
+            update_video_procesado_sync(
+                video_id,
+                result['processed_path'],
+                result['duracion_procesada'],
+                result['resolucion_procesada']
+            )
+            update_procesamiento_estado_sync(
+                video_id, "completado", 1,
+                fecha_fin=datetime.utcnow()
+            )
+            
+            logger.info(f"✅ Procesamiento completado para video {video_id}")
+            return {
+                'video_id': video_id,
+                'status': 'completed',
+                'processed_path': result['processed_path'],
+                'duracion_procesada': result['duracion_procesada'],
+                'message': 'Video procesado exitosamente'
+            }
+        else:
+            # ❌ ERROR
+            raise Exception(result['error'])
+            
     except Exception as exc:
-        logger.error(f"Error procesando video {video_id}: {str(exc)}")
-        raise self.retry(countdown=60, exc=exc)
+        logger.error(f"❌ Error procesando video {video_id}: {str(exc)}")
+        
+        # ACTUALIZAR ESTADO DE ERROR
+        update_video_estado_sync(video_id, "error")
+        update_procesamiento_estado_sync(
+            video_id, "fallado", 
+            self.request.retries + 1,
+            fecha_fin=datetime.utcnow(),
+            error_message=str(exc)
+        )
+        
+        # Reintentar la tarea
+        if self.request.retries < self.max_retries:
+            raise self.retry(countdown=60, exc=exc)
+        else:
+            logger.error(f"❌ Máximo de reintentos alcanzado para video {video_id}")
+            return {
+                'video_id': video_id,
+                'status': 'failed',
+                'error': str(exc),
+                'message': 'Error procesando video después de múltiples intentos'
+            }
 
 @celery_app.task
 def cleanup_old_videos():
-    """
-    Tarea de mantenimiento: limpiar videos antiguos
-    """
+    """Tarea de mantenimiento"""
     try:
         logger.info("Ejecutando limpieza de videos antiguos")
-        # Por ahora solo log, implementar lógica real después
-        cleaned_count = 0
-        # Aquí iría la lógica real de limpieza
-        
-        return {"cleaned_files": cleaned_count, "status": "completed"}
+        return {"cleaned_files": 0, "status": "completed"}
     except Exception as e:
         logger.error(f"Error en limpieza: {str(e)}")
         return {"error": str(e), "status": "failed"}

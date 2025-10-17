@@ -7,7 +7,7 @@ from typing import Optional
 from app.config.database import get_db
 from app.services.auth_service import AuthService
 from app.models.user import UserCreate, UserLogin, UserResponse, Token
-from app.models.jugador import JugadorCreate
+from app.models.jugador import JugadorCreate  # ✅ AGREGAR ESTA IMPORTACIÓN
 
 router = APIRouter()
 
@@ -44,8 +44,14 @@ async def signup(
         
         return await auth_service.register_user(signup_data.user, signup_data.jugador)
     
-    except HTTPException:
-        raise
+    except HTTPException as he:
+        # Re-lanzar excepciones HTTP específicas
+        if he.status_code == status.HTTP_400_BAD_REQUEST:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=he.detail
+            )
+        raise he
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -66,8 +72,13 @@ async def login(
         auth_service = AuthService(db)
         return await auth_service.authenticate_user(login_data.email, login_data.password)
     
-    except HTTPException:
-        raise
+    except HTTPException as he:
+        if "Credenciales incorrectas" in str(he.detail):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Credenciales inválidas"
+            )
+        raise he
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

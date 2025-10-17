@@ -12,11 +12,11 @@ class VideoEstado(str, Enum):
 class VideoVisibilidad(str, Enum):
     publico = "publico"
     privado = "privado"
-
+    
 class VideoBase(BaseModel):
     titulo: str
-    descripcion: Optional[str] = None
-    visibilidad: VideoVisibilidad = VideoVisibilidad.publico
+    descripcion: Optional[str] = None  # ✅ AGREGAR ESTE CAMPO
+    visibilidad: VideoVisibilidad = VideoVisibilidad.publico  # ✅ AGREGAR ESTE CAMPO
 
     @validator('titulo')
     def validate_titulo(cls, v):
@@ -27,12 +27,6 @@ class VideoBase(BaseModel):
         if len(v.strip()) > 255:
             raise ValueError('El título no puede tener más de 255 caracteres')
         return v.strip()
-
-    @validator('descripcion')
-    def validate_descripcion(cls, v):
-        if v and len(v) > 1000:
-            raise ValueError('La descripción no puede tener más de 1000 caracteres')
-        return v
 
 class VideoCreate(VideoBase):
     pass
@@ -50,6 +44,21 @@ class VideoResponse(VideoBase):
     class Config:
         from_attributes = True
 
+class VideoDetailResponse(VideoResponse):
+    """Respuesta extendida para detalle de video"""
+    descripcion: Optional[str] = None
+    visibilidad: VideoVisibilidad  
+    url_original: Optional[str] = None
+    url_procesado: Optional[str] = None
+    puede_eliminar: bool
+
+    class Config:
+        from_attributes = True
+
 class VideoUploadResponse(BaseModel):
-    video: VideoResponse
-    message: str = "Video subido exitosamente. Se está procesando."
+    message: str = "Video subido correctamente. Procesamiento en curso."
+    task_id: str
+
+class VideoDeleteResponse(BaseModel):
+    message: str
+    video_id: str
