@@ -175,7 +175,7 @@ class VideoService:
                 detail=f"Error interno del servidor: {str(e)}"
             )
     
-    
+
     
     async def delete_video(self, user_id: str, video_id: str):
         """
@@ -378,3 +378,51 @@ class VideoService:
         #     return False
         
         return True
+    
+    
+    async def get_videos_for_voting(self, skip: int = 0, limit: int = 50):
+        """
+        Obtiene videos disponibles para votación
+
+        Criterios:
+        - Estado: 'procesado'
+        - Visibilidad: 'publico'
+        - Ordenados por fecha de subida (más recientes primero)
+        """
+        try:
+            from sqlalchemy import select
+            from app.schemas.video import Video
+
+            result = await self.db.execute(
+                select(Video)
+                .where(
+                    Video.estado == 'procesado',
+                    Video.visibilidad == 'publico'
+                )
+                .order_by(Video.fecha_subida.desc())
+                .offset(skip)
+                .limit(limit)
+            )
+
+            videos = result.scalars().all()
+
+            return [
+                VideoResponse(
+                    id=video.id,
+                    jugador_id=video.jugador_id,
+                    titulo=video.titulo,
+                    descripcion=video.descripcion,
+                    estado=video.estado,
+                    duracion_original=video.duracion_original,
+                    duracion_procesada=video.duracion_procesada,
+                    contador_vistas=video.contador_vistas,
+                    visibilidad=video.visibilidad,
+                    fecha_subida=video.fecha_subida,
+                    fecha_procesamiento=video.fecha_procesamiento
+                )
+                for video in videos
+            ]
+
+        except Exception as e:
+            logger.error(f"Error obteniendo videos para votación: {str(e)}")
+            return []
