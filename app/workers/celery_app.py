@@ -8,7 +8,8 @@ celery_app = Celery(
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
     include=[
-        "app.workers.video_tasks",  # ← Asegúrate que esta ruta sea correcta
+        "app.workers.video_tasks",  # Tareas de video
+        "app.workers.ranking_tasks",  # ✅ NUEVA: Tareas de rankings
         # "app.workers.email_tasks"  # Comenta si no existe
     ]
 )
@@ -28,11 +29,22 @@ celery_app.conf.update(
     worker_max_tasks_per_child=100,
 )
 
-# Configuración específica para tareas de video
+# Configuración de Celery Beat para tareas programadas
+celery_app.conf.beat_schedule = {
+    'update-rankings-every-5-minutes': {
+        'task': 'app.workers.ranking_tasks.update_rankings_task',  
+        'schedule': 300.0,  # Cada 5 minutos (300 segundos)
+        'options': {'queue': 'rankings'}
+    },
+    # Puedes agregar más tareas programadas aquí
+}
+
+# Configuración específica de rutas para colas
 celery_app.conf.task_routes = {
     'app.workers.video_tasks.process_video_task': {'queue': 'video_processing'},
     'app.workers.video_tasks.cleanup_old_videos': {'queue': 'maintenance'},
+    'app.workers.ranking_tasks.update_rankings_task': {'queue': 'rankings'},  
 }
 
 # Importar tareas después de configurar la app
-from app.workers import video_tasks
+from app.workers import video_tasks, ranking_tasks  
