@@ -4,6 +4,7 @@ import logging
 from app.config.settings import settings
 from app.api.routes.auth import router as auth_router
 from app.api.routes.videos import router as videos_router
+from app.api.routes.public import router as public_router
 
 # Configurar logging
 logging.basicConfig(
@@ -31,6 +32,7 @@ app.add_middleware(
 # Routers
 app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(videos_router, prefix="/api/videos", tags=["Videos"])
+app.include_router(public_router, prefix="/api/public", tags=["Public"])
 
 @app.get("/")
 async def root():

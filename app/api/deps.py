@@ -33,3 +33,26 @@ async def get_current_user(
         )
     
     return user
+
+async def get_current_user_optional(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Obtiene el usuario actual desde el JWT (opcional)
+    Retorna None si no hay token o es inválido
+    """
+    try:
+        token = credentials.credentials
+        user_id = security_core.verify_token(token)
+        
+        if user_id is None:
+            return None
+        
+        user = await db.get(User, user_id)
+        if user is None or not user.activo:
+            return None
+        
+        return user
+    except Exception:
+        return None

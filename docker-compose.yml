@@ -51,7 +51,7 @@ services:
       dockerfile: Dockerfile
     container_name: anb-celery-worker
     restart: unless-stopped
-    command: celery -A app.workers.celery_app:celery_app worker --loglevel=info --concurrency=2 --queues=video_processing,maintenance --hostname=worker@%h
+    command: celery -A app.workers.celery_app:celery_app worker --loglevel=info --concurrency=2 --queues=video_processing,maintenance,rankings --hostname=worker@%h
     environment:
       - DATABASE_URL=mysql+aiomysql://ANBAdmin:ANB12345@mysql-db:3306/anb_rising_stars
       - REDIS_URL=redis://redis:6379/0
