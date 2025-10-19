@@ -22,7 +22,14 @@
   - **Configuración redis**
 
 ## 🟩 Estructura de carpetas del Repo
-
+```text
+├───aplication
+├───collections
+├───docs
+│   └───entrega_1
+└───sustentacion
+    └───entrega_1
+```
 ## 🟩 Estructura de carpetas de la aplicación 
 ```text
 .
@@ -48,4 +55,9 @@
     └───assets
 ```
 ## 🟦 Docuemntación del proyecto
-La documentación del proyecto lo puede encontrar en la ruta (/docs/Entrega_1) dentro del proyecto 
+La documentación del proyecto lo puede encontrar en la ruta (/docs/Entrega_1) dentro del proyecto
+- **Modelo de datos** (/docs/Entrega_1/Modelo de datos)
+- **Diagrama de componentes** (/docs/Entrega_1/Diagrama de componentes)
+- **Diagrama de flujo de procesos** (/docs/Entrega_1/Diagrama de flujo de procesos)
+- **Despliegue y documentación** (/aplication/app/ConsideracionesDespliegue)
+
