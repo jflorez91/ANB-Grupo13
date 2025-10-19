@@ -21,7 +21,9 @@
   - **Configuración SonarQube**
   - **Configuración redis**
 
-## 🟩 Estructura de carpetas
+## 🟩 Estructura de carpetas del Repo
+
+## 🟩 Estructura de carpetas de la aplicación 
 ```text
 .
 ├───app
@@ -44,3 +46,6 @@
 ├───scripts
 └───storage
     └───assets
+```
+## 🟦 Docuemntación del proyecto
+La documentación del proyecto lo puede encontrar en la ruta (/docs/Entrega_1) dentro del proyecto 
