@@ -44,7 +44,7 @@ services:
       timeout: 3s
       retries: 3
 
-  # Celery Worker - CORREGIDO (comando en una línea)
+  # Celery Worker
   celery_worker:
     build: 
       context: .
@@ -72,7 +72,7 @@ services:
       timeout: 10s
       retries: 3
 
-  # Celery Beat - CORREGIDO (comando en una línea)
+  # Celery Beat
   celery_beat:
     build: 
       context: .
@@ -155,11 +155,27 @@ services:
       timeout: 20s
       retries: 10
 
+  # Locust - Pruebas de Carga
+  locust:
+    build:
+      context: .
+      dockerfile: Dockerfile.locust
+    container_name: anb-locust
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "8089:8089"
+    networks:
+      - anb-network
+
+# Volúmenes
 volumes:
   mysql_data:
   redis_data:
   celery_beat_data:
 
+# Red compartida
 networks:
   anb-network:
     driver: bridge
