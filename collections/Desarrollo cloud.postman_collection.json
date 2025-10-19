@@ -1,0 +1,287 @@
+{
+	"info": {
+		"_postman_id": "9558b254-3387-4d59-95c8-cdab4e9bcbf3",
+		"name": "Desarrollo cloud",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "13997785",
+		"_collection_link": "https://orange-crescent-76739.postman.co/workspace/UniAndes~2ce33c2f-7de9-47b0-85b4-7b7b8c4bff05/collection/13997785-9558b254-3387-4d59-95c8-cdab4e9bcbf3?action=share&source=collection_link&creator=13997785"
+	},
+	"item": [
+		{
+			"name": "Autenticación",
+			"item": []
+		},
+		{
+			"name": "Videos",
+			"item": [
+				{
+					"name": "Obtener todos los videos subidos",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"user\": {\r\n    \"email\": \"user@example.com\",\r\n    \"nombre\": \"string\",\r\n    \"apellido\": \"string\",\r\n    \"password\": \"string\",\r\n    \"password_confirm\": \"string\",\r\n    \"tipo\": \"publico\"\r\n  },\r\n  \"jugador\": {\r\n    \"fecha_nacimiento\": \"2025-10-19\",\r\n    \"ciudad_id\": \"string\",\r\n    \"telefono_contacto\": \"string\",\r\n    \"altura\": 0,\r\n    \"peso\": 0,\r\n    \"posicion\": \"string\",\r\n    \"biografia\": \"string\"\r\n  }\r\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/videos",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"videos"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtiene el detalle de un video específico",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"user\": {\r\n    \"email\": \"user@example.com\",\r\n    \"nombre\": \"string\",\r\n    \"apellido\": \"string\",\r\n    \"password\": \"string\",\r\n    \"password_confirm\": \"string\",\r\n    \"tipo\": \"publico\"\r\n  },\r\n  \"jugador\": {\r\n    \"fecha_nacimiento\": \"2025-10-19\",\r\n    \"ciudad_id\": \"string\",\r\n    \"telefono_contacto\": \"string\",\r\n    \"altura\": 0,\r\n    \"peso\": 0,\r\n    \"posicion\": \"string\",\r\n    \"biografia\": \"string\"\r\n  }\r\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/videos/{video_id}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"videos",
+								"{video_id}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Elimina un video",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"user\": {\r\n    \"email\": \"user@example.com\",\r\n    \"nombre\": \"string\",\r\n    \"apellido\": \"string\",\r\n    \"password\": \"string\",\r\n    \"password_confirm\": \"string\",\r\n    \"tipo\": \"publico\"\r\n  },\r\n  \"jugador\": {\r\n    \"fecha_nacimiento\": \"2025-10-19\",\r\n    \"ciudad_id\": \"string\",\r\n    \"telefono_contacto\": \"string\",\r\n    \"altura\": 0,\r\n    \"peso\": 0,\r\n    \"posicion\": \"string\",\r\n    \"biografia\": \"string\"\r\n  }\r\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/videos/{video_id}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"videos",
+								"{video_id}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Votación",
+			"item": [
+				{
+					"name": "Lista todos los videos públicos disponibles",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"user\": {\r\n    \"email\": \"user@example.com\",\r\n    \"nombre\": \"string\",\r\n    \"apellido\": \"string\",\r\n    \"password\": \"string\",\r\n    \"password_confirm\": \"string\",\r\n    \"tipo\": \"publico\"\r\n  },\r\n  \"jugador\": {\r\n    \"fecha_nacimiento\": \"2025-10-19\",\r\n    \"ciudad_id\": \"string\",\r\n    \"telefono_contacto\": \"string\",\r\n    \"altura\": 0,\r\n    \"peso\": 0,\r\n    \"posicion\": \"string\",\r\n    \"biografia\": \"string\"\r\n  }\r\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/public/videos",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"public",
+								"videos"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Emite un voto por un video público.",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"user\": {\r\n    \"email\": \"user@example.com\",\r\n    \"nombre\": \"string\",\r\n    \"apellido\": \"string\",\r\n    \"password\": \"string\",\r\n    \"password_confirm\": \"string\",\r\n    \"tipo\": \"publico\"\r\n  },\r\n  \"jugador\": {\r\n    \"fecha_nacimiento\": \"2025-10-19\",\r\n    \"ciudad_id\": \"string\",\r\n    \"telefono_contacto\": \"string\",\r\n    \"altura\": 0,\r\n    \"peso\": 0,\r\n    \"posicion\": \"string\",\r\n    \"biografia\": \"string\"\r\n  }\r\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/public/videos/{video_id}/vote",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"public",
+								"videos",
+								"{video_id}",
+								"vote"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Muestra el ranking actual de jugadores por votos acumulados",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"user\": {\r\n    \"email\": \"user@example.com\",\r\n    \"nombre\": \"string\",\r\n    \"apellido\": \"string\",\r\n    \"password\": \"string\",\r\n    \"password_confirm\": \"string\",\r\n    \"tipo\": \"publico\"\r\n  },\r\n  \"jugador\": {\r\n    \"fecha_nacimiento\": \"2025-10-19\",\r\n    \"ciudad_id\": \"string\",\r\n    \"telefono_contacto\": \"string\",\r\n    \"altura\": 0,\r\n    \"peso\": 0,\r\n    \"posicion\": \"string\",\r\n    \"biografia\": \"string\"\r\n  }\r\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/public/rankings?ciudad&skip&limit",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"public",
+								"rankings"
+							],
+							"query": [
+								{
+									"key": "ciudad",
+									"value": null
+								},
+								{
+									"key": "skip",
+									"value": null
+								},
+								{
+									"key": "limit",
+									"value": null
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Registro de nuevos jugadores en la plataforma.",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"user\": {\r\n    \"email\": \"user@example.com\",\r\n    \"nombre\": \"string\",\r\n    \"apellido\": \"string\",\r\n    \"password\": \"string\",\r\n    \"password_confirm\": \"string\",\r\n    \"tipo\": \"publico\"\r\n  },\r\n  \"jugador\": {\r\n    \"fecha_nacimiento\": \"2025-10-19\",\r\n    \"ciudad_id\": \"string\",\r\n    \"telefono_contacto\": \"string\",\r\n    \"altura\": 0,\r\n    \"peso\": 0,\r\n    \"posicion\": \"string\",\r\n    \"biografia\": \"string\"\r\n  }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/auth/signup",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"auth",
+						"signup"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Autenticación de usuarios y generación de JWT",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "\r\n{\r\n  \"email\": \"user@example.com\",\r\n  \"password\": \"string\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:80/api/auth/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Subir un video de habilidades.",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"user\": {\r\n    \"email\": \"user@example.com\",\r\n    \"nombre\": \"string\",\r\n    \"apellido\": \"string\",\r\n    \"password\": \"string\",\r\n    \"password_confirm\": \"string\",\r\n    \"tipo\": \"publico\"\r\n  },\r\n  \"jugador\": {\r\n    \"fecha_nacimiento\": \"2025-10-19\",\r\n    \"ciudad_id\": \"string\",\r\n    \"telefono_contacto\": \"string\",\r\n    \"altura\": 0,\r\n    \"peso\": 0,\r\n    \"posicion\": \"string\",\r\n    \"biografia\": \"string\"\r\n  }\r\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/videos/upload",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"videos",
+						"upload"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
