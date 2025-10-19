@@ -170,10 +170,77 @@ services:
       - anb-network
 
 # Volúmenes
+  # SonarQube - Servidor de análisis
+  sonarqube:
+    image: sonarqube:community
+    container_name: anb-sonarqube
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    environment:
+      # Desactiva chequeos de producción para entorno local
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    networks:
+      - anb-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+
+  # Tests + Análisis Sonar (usa tu misma imagen de la API para tener dependencias)
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: anb-tests
+    depends_on:
+      sonarqube:
+        condition: service_healthy
+    environment:
+      - SONAR_HOST_URL=http://sonarqube:9000
+      - SONAR_TOKEN=${SONAR_TOKEN}
+      # Variables opcionales si tus tests requieren servicios
+      - DATABASE_URL=mysql+aiomysql://ANBAdmin:ANB12345@mysql-db:3306/anb_rising_stars
+      - REDIS_URL=redis://redis:6379/0
+      - PYTHONPATH=/app
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - ./logs:/app/logs
+    command: ["/app/run_tests_and_sonar.sh"]
+    networks:
+      - anb-network
+
+  # SonarScanner CLI (opcional) para ejecutar análisis desde un contenedor
+  sonar-scanner:
+    image: sonarsource/sonar-scanner-cli:latest
+    container_name: anb-sonar-scanner
+    depends_on:
+      sonarqube:
+        condition: service_healthy
+    working_dir: /usr/src
+    volumes:
+      - ./:/usr/src
+    environment:
+      - SONAR_HOST_URL=http://sonarqube:9000
+      # Pasa el token por variable o docker compose override
+      # - SONAR_LOGIN=YOUR_TOKEN
+    entrypoint: ["tail", "-f", "/dev/null"]
+    networks:
+      - anb-network
+
 volumes:
   mysql_data:
   redis_data:
   celery_beat_data:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
 
 # Red compartida
 networks:
