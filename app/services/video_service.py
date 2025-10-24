@@ -215,8 +215,32 @@ class VideoService:
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="El video no puede ser eliminado porque no cumple las condiciones"
                 )
+            
+            # 4. Eliminar archivos físicos
+            try:
+                if video.archivo_original and os.path.exists(video.archivo_original):
+                    os.remove(video.archivo_original)
+                    logger.info(f"Archivo original eliminado: {video.archivo_original}")
+                
+                if video.archivo_procesado and os.path.exists(video.archivo_procesado):
+                    os.remove(video.archivo_procesado)
+                    logger.info(f"Archivo procesado eliminado: {video.archivo_procesado}")
+            except Exception as file_error:
+                logger.warning(f"Error eliminando archivos físicos: {file_error}")
+
+            # 5. Eliminar registros de base de datos
+            # Primero eliminar procesamiento_video (si existe)
+            result_procesamiento = await self.db.execute(
+                select(ProcesamientoVideo).where(ProcesamientoVideo.video_id == video_id)
+            )
+            procesamiento = result_procesamiento.scalar_one_or_none()
+            if procesamiento:
+                await self.db.delete(procesamiento)
+
+            # Luego eliminar el video
+            await self.db.delete(video)
+            await self.db.commit()
     
-            # ... resto del método igual pero actualizar respuesta ...
             
             return VideoDeleteResponse(
                 message="El video ha sido eliminado exitosamente.",
