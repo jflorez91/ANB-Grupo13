@@ -158,8 +158,8 @@ services:
   # Locust - Pruebas de Carga
   locust:
     build:
-      context: .
-      dockerfile: Dockerfile.locust
+      context: ..
+      dockerfile: aplication/Dockerfile.locust
     container_name: anb-locust
     depends_on:
       api:

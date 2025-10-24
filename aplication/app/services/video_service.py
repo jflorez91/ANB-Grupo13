@@ -19,19 +19,17 @@ from app.workers.video_tasks import process_video_task
 logger = logging.getLogger(__name__)
 
 class VideoService:
-    """Servicio para gestión de videos"""
+    
     
     def __init__(self, db: AsyncSession):
         self.db = db
 
     async def upload_video(self, user_id: str, video_data: VideoCreate, file: UploadFile):
-        """
-        Sube y procesa un video para un jugador
-        """
+        
         try:
             logger.info(f"Iniciando upload de video para usuario: {user_id}")
     
-            # 1. Verificar que el usuario es un jugador
+            #Verificar que el usuario es un jugador
             jugador = await self._get_jugador_by_usuario_id(user_id)
             if not jugador:
                 raise HTTPException(
@@ -39,14 +37,14 @@ class VideoService:
                     detail="Se requiere autenticación"
                 )
     
-            # 2. Validar tipo de archivo - SOLO MP4
+            #Validar tipo de archivo - SOLO MP4
             if not file.content_type == 'video/mp4':
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Solo se permiten archivos MP4"
                 )
     
-            # 3. Validar tamaño máximo - 100MB
+            #Validar tamaño máximo - 100MB
             MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
             content = await file.read()
             if len(content) > MAX_FILE_SIZE:
@@ -55,24 +53,24 @@ class VideoService:
                     detail="El archivo es demasiado grande. Tamaño máximo: 100MB"
                 )
     
-            # 4. GENERAR VIDEO_ID PRIMERO
+            #GENERAR VIDEO_ID PRIMERO
             video_id = str(uuid.uuid4())
             logger.info(f"Video ID generado: {video_id}")
             
-            # 5. Guardar archivo manualmente USANDO EL VIDEO_ID
+            #Guardar archivo manualmente USANDO EL VIDEO_ID
             file_path = f"/storage/uploads/videos/originales/{video_id}.mp4"
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
             
-            # Guardar archivo
+            #Guardar archivo
             with open(file_path, "wb") as buffer:
                 buffer.write(content)
     
             logger.info(f"Archivo guardado en: {file_path}")
             
-            # 6. Obtener metadatos del video (duración real)
+            #Obtener metadatos del video (duración real)
             video_metadata = await self._get_video_metadata(file_path)
     
-            # 7. Crear registro en base de datos
+            #Crear registro en base de datos
             video = await self._create_video_record(
                 video_id=video_id,
                 jugador_id=jugador.id,
@@ -82,19 +80,19 @@ class VideoService:
                 original_filename=file.filename
             )
     
-            # 8. Crear registro de procesamiento
+            # Crear registro de procesamiento
             procesamiento = await self._create_processing_record(video.id)
     
-            # 9. INICIAR PROCESAMIENTO ASÍNCRONO CON CELERY
+            #INICIAR PROCESAMIENTO ASÍNCRONO CON CELERY
             task = process_video_task.delay(str(video.id))
             
-            # Actualizar el registro con el ID de la tarea Celery
+            #Actualizar el registro con el ID de la tarea Celery
             procesamiento.tarea_id = task.id
             await self.db.commit()
     
             logger.info(f"Video {video.id} creado y tarea Celery {task.id} iniciada")
     
-            # 10. Preparar respuesta según especificación
+            #Preparar respuesta según especificación
             return VideoUploadResponse(
                 message="Video subido correctamente. Procesamiento en curso.",
                 task_id=task.id
@@ -110,11 +108,9 @@ class VideoService:
             )
     
     async def get_video_detail(self, user_id: str, video_id: str):
-        """
-        Obtiene el detalle de un video específico del usuario
-        """
+        
         try:
-            # 1. Obtener el jugador del usuario
+            #Obtener el jugador del usuario
             jugador = await self._get_jugador_by_usuario_id(user_id)
             if not jugador:
                 raise HTTPException(
@@ -122,7 +118,7 @@ class VideoService:
                     detail="Se requiere autenticación"
                 )
 
-            # 2. Buscar el video y verificar propiedad
+            #Buscar el video y verificar propiedad
             result = await self.db.execute(
                 select(Video).where(Video.id == video_id)
             )
@@ -134,31 +130,29 @@ class VideoService:
                     detail="Video no encontrado"
                 )
 
-            # 3. Verificar que el usuario es propietario del video
+            #Verificar que el usuario es propietario del video
             if video.jugador_id != jugador.id:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="No tiene permisos para acceder a este video"
                 )
 
-            # 4. Construir URLs para el video (si está procesado)
-            url_original = f"/storage/videos/original/{video.id}.mp4" if video.archivo_original else None
-            url_procesado = f"/storage/videos/processed/{video.id}_final.mp4" if video.archivo_procesado else None
+            #Construir URLs para el video (si está procesado)
+            url_original = f"/storage/uploads/videos/originales/{video.id}.mp4" if video.archivo_original else None
+            url_procesado = f"/storage/processed/videos/{video.id}_final.mp4" if video.archivo_procesado else None
 
-            # 5. Determinar si se puede eliminar
+            #Determinar si se puede eliminar
             puede_eliminar = self._puede_eliminar_video(video)
 
-            # 6. Retornar respuesta estructurada
+            #Retornar respuesta estructurada
             return VideoDetailResponse(
                 id=video.id,
                 jugador_id=video.jugador_id,
                 titulo=video.titulo,
-                descripcion=video.descripcion,
                 estado=video.estado,
                 duracion_original=video.duracion_original,
                 duracion_procesada=video.duracion_procesada,
                 contador_vistas=video.contador_vistas,
-                visibilidad=video.visibilidad,
                 fecha_subida=video.fecha_subida,
                 fecha_procesamiento=video.fecha_procesamiento,
                 url_original=url_original,
@@ -178,11 +172,9 @@ class VideoService:
 
     
     async def delete_video(self, user_id: str, video_id: str):
-        """
-        Elimina un video del usuario si cumple las condiciones
-        """
+        
         try:
-            # 1. Obtener el jugador del usuario
+            #Obtener el jugador del usuario
             jugador = await self._get_jugador_by_usuario_id(user_id)
             if not jugador:
                 raise HTTPException(
@@ -190,7 +182,7 @@ class VideoService:
                     detail="Se requiere autenticación"
                 )
     
-            # 2. Buscar el video
+            #Buscar el video
             result = await self.db.execute(
                 select(Video).where(Video.id == video_id)
             )
@@ -202,22 +194,46 @@ class VideoService:
                     detail="Video no encontrado"
                 )
     
-            # 3. Verificar que el usuario es propietario del video
+            #Verificar que el usuario es propietario del video
             if video.jugador_id != jugador.id:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="No tiene permisos para eliminar este video"
                 )
     
-            # 4. Verificar si se puede eliminar
+            #Verificar si se puede eliminar
             if not self._puede_eliminar_video(video):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="El video no puede ser eliminado porque no cumple las condiciones"
                 )
-    
-            # ... resto del método igual pero actualizar respuesta ...
             
+            #Eliminar archivos físicos
+            try:
+                if video.archivo_original and os.path.exists(video.archivo_original):
+                    os.remove(video.archivo_original)
+                    logger.info(f"Archivo original eliminado: {video.archivo_original}")
+            
+                if video.archivo_procesado and os.path.exists(video.archivo_procesado):
+                    os.remove(video.archivo_procesado)
+                    logger.info(f"Archivo procesado eliminado: {video.archivo_procesado}")
+            except Exception as file_error:
+                logger.warning(f"Error eliminando archivos físicos: {file_error}")
+    
+            from app.schemas.procesamiento_video import ProcesamientoVideo
+            result_procesamiento = await self.db.execute(
+                select(ProcesamientoVideo).where(ProcesamientoVideo.video_id == video_id)
+            )
+            procesamiento = result_procesamiento.scalar_one_or_none()
+            if procesamiento:
+                await self.db.delete(procesamiento)
+
+            # Luego eliminar el video
+            await self.db.delete(video)
+            await self.db.commit()
+            
+            logger.info(f"Video {video_id} eliminado exitosamente por usuario {user_id}")
+
             return VideoDeleteResponse(
                 message="El video ha sido eliminado exitosamente.",
                 video_id=video_id
@@ -232,9 +248,10 @@ class VideoService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error interno del servidor: {str(e)}"
             )
+        
 
     async def get_user_videos(self, user_id: str):
-        """Obtiene todos los videos de un usuario"""
+        
         # Primero obtener el jugador
         jugador = await self._get_jugador_by_usuario_id(user_id)
         if not jugador:
@@ -251,12 +268,10 @@ class VideoService:
                 id=video.id,
                 jugador_id=video.jugador_id,
                 titulo=video.titulo,
-                descripcion=video.descripcion,
                 estado=video.estado,
                 duracion_original=video.duracion_original,
                 duracion_procesada=video.duracion_procesada,
                 contador_vistas=video.contador_vistas,
-                visibilidad=video.visibilidad,
                 fecha_subida=video.fecha_subida,
                 fecha_procesamiento=video.fecha_procesamiento
             )
@@ -264,16 +279,14 @@ class VideoService:
         ]
 
     async def _get_jugador_by_usuario_id(self, usuario_id: str):
-        """Obtiene el jugador asociado a un usuario"""
+        
         result = await self.db.execute(
             select(Jugador).where(Jugador.usuario_id == usuario_id)
         )
         return result.scalar_one_or_none()
 
     async def _get_video_metadata(self, file_path: str):
-        """
-        Obtiene metadatos REALES del video usando FFprobe
-        """
+        
         try:
             # Comando para obtener metadatos con FFprobe
             cmd = [
@@ -311,20 +324,18 @@ class VideoService:
 
     async def _create_video_record(self, video_id: str, jugador_id: str, video_data: VideoCreate, 
                                  file_path: str, metadata: dict, original_filename: str):
-        """Crea el registro del video en la base de datos"""
+        
         
         video = Video(
             id=video_id,
             jugador_id=jugador_id,
             titulo=video_data.titulo,
-            descripcion=video_data.descripcion,
             archivo_original=file_path,
             duracion_original=metadata["duracion"],  # Duración real en segundos
             estado="subido",
             formato_original=metadata["formato"],
             tamaño_archivo=os.path.getsize(file_path) if os.path.exists(file_path) else 0,
             resolucion_original=metadata["resolucion"],
-            visibilidad=video_data.visibilidad,
             fecha_subida=datetime.utcnow(),
             contador_vistas=0
         )
@@ -336,8 +347,7 @@ class VideoService:
         return video
 
     async def _create_processing_record(self, video_id: str):
-        """Crea registro de procesamiento del video"""
-        
+                
         procesamiento = ProcesamientoVideo(
             id=str(uuid.uuid4()),
             video_id=video_id,
@@ -361,34 +371,20 @@ class VideoService:
         return procesamiento
 
     def _puede_eliminar_video(self, video) -> bool:
-        """
-        Determina si un video puede ser eliminado
-        """
+        
         # No se puede eliminar si está siendo procesado
         if video.estado == "procesando":
             return False
         
-        # No se puede eliminar si ya está procesado y es público
-        # (asumimos que los videos públicos están publicados para votación)
+        # No se puede eliminar si ya está procesado y es público        
         if video.estado == "procesado" and video.visibilidad == "publico":
             return False
-        
-        # No se puede eliminar si tiene votos (aquí puedes agregar esta validación después)
-        # if video.contador_vistas > 0 or video.tiene_votos:
-        #     return False
-        
+              
         return True
     
     
     async def get_videos_for_voting(self, skip: int = 0, limit: int = 50):
-        """
-        Obtiene videos disponibles para votación
-
-        Criterios:
-        - Estado: 'procesado'
-        - Visibilidad: 'publico'
-        - Ordenados por fecha de subida (más recientes primero)
-        """
+        
         try:
             from sqlalchemy import select
             from app.schemas.video import Video
@@ -410,13 +406,10 @@ class VideoService:
                 VideoResponse(
                     id=video.id,
                     jugador_id=video.jugador_id,
-                    titulo=video.titulo,
-                    descripcion=video.descripcion,
                     estado=video.estado,
                     duracion_original=video.duracion_original,
                     duracion_procesada=video.duracion_procesada,
                     contador_vistas=video.contador_vistas,
-                    visibilidad=video.visibilidad,
                     fecha_subida=video.fecha_subida,
                     fecha_procesamiento=video.fecha_procesamiento
                 )

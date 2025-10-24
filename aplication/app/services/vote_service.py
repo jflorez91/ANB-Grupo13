@@ -19,27 +19,16 @@ from app.schemas.ranking import Ranking
 logger = logging.getLogger(__name__)
 
 class VoteService:
-    """Servicio para gestión de votos y rankings"""
     
     def __init__(self, db: AsyncSession):
         self.db = db
-        # Configurar Redis para caching
         self.redis_client = redis.Redis.from_url(settings.REDIS_URL)
-        self.cache_ttl = 300  # 5 minutos en segundos
+        self.cache_ttl = 300
 
     async def vote_for_video(self, user_id: str, video_id: str):
-        """
-        Registra un voto por un video
-        
-        Args:
-            user_id: ID del usuario que vota
-            video_id: ID del video a votar
-            
-        Raises:
-            HTTPException: Si el video no existe, no es votable o ya fue votado
-        """
+       
         try:
-            # 1. Verificar que el video existe y es votable
+            #Verificar que el video existe y es votable
             video = await self._get_votable_video(video_id)
             if not video:
                 raise HTTPException(
@@ -47,7 +36,7 @@ class VoteService:
                     detail="Video no encontrado o no disponible para votación"
                 )
 
-            # 2. Verificar que el usuario no haya votado antes por este video
+            #Verificar que el usuario no haya votado antes por este video
             existing_vote = await self._get_existing_vote(user_id, video_id)
             if existing_vote:
                 raise HTTPException(
@@ -55,22 +44,22 @@ class VoteService:
                     detail="Ya ha votado por este video"
                 )
 
-            # 3. Crear el voto
+            #Crear el voto
             voto = Voto(
                 id=str(uuid.uuid4()),
                 video_id=video_id,
                 usuario_id=user_id,
-                ip_address="127.0.0.1",  # En producción, obtener de request
+                ip_address="127.0.0.1",
                 fecha_voto=datetime.utcnow(),
                 valor=1
             )
 
             self.db.add(voto)
             
-            # 4. Incrementar contador de vistas (opcional)
+            #Incrementar contador de vistas (opcional)
             video.contador_vistas += 1
             
-            # 5. Invalidar cache de rankings y programar actualización
+            #Invalidar cache de rankings y programar actualización
             await self.invalidate_rankings_on_vote()
             
             await self.db.commit()
@@ -88,9 +77,7 @@ class VoteService:
             )
 
     async def get_rankings(self, ciudad: str = None, skip: int = 0, limit: int = 50):
-        """
-        Obtiene el ranking de jugadores con caching en Redis
-        """
+        
         try:
             # Generar clave única para el cache basada en los parámetros
             cache_key = self._generate_cache_key(ciudad, skip, limit)
@@ -98,11 +85,11 @@ class VoteService:
             # Intentar obtener del cache primero
             cached_result = self._get_from_cache(cache_key)
             if cached_result:
-                logger.info("✅ Ranking obtenido desde cache")
+                logger.info("Ranking obtenido desde cache")
                 return cached_result
             
             # Si no está en cache, calcular desde la base de datos
-            logger.info("🔄 Calculando ranking desde base de datos")
+            logger.info("Calculando ranking desde base de datos")
             rankings = await self._calculate_rankings(ciudad, skip, limit)
             
             # Guardar en cache
@@ -116,9 +103,7 @@ class VoteService:
             return await self._calculate_rankings(ciudad, skip, limit)
 
     async def _calculate_rankings(self, ciudad: str = None, skip: int = 0, limit: int = 50):
-        """
-        Calcula el ranking desde la tabla Ranking (no desde votos en tiempo real)
-        """
+      
         try:
             # Primero intentar desde la tabla Ranking
             rankings = await self._calculate_rankings_from_table(ciudad, skip, limit)
@@ -137,9 +122,7 @@ class VoteService:
             )
 
     async def _calculate_rankings_from_table(self, ciudad: str = None, skip: int = 0, limit: int = 50):
-        """
-        Calcula el ranking desde la tabla Ranking (más eficiente)
-        """
+        
         try:
             # Consulta optimizada usando la tabla Ranking
             stmt = (
@@ -191,9 +174,7 @@ class VoteService:
             return None
 
     async def _calculate_rankings_fallback(self, ciudad: str = None, skip: int = 0, limit: int = 50):
-        """
-        Fallback: calcular ranking desde votos (solo si la tabla Ranking está vacía)
-        """
+        
         try:
             stmt = (
                 select(
@@ -241,7 +222,7 @@ class VoteService:
             return []
 
     async def _get_votable_video(self, video_id: str):
-        """Obtiene un video que cumpla con los criterios para votación"""
+        
         result = await self.db.execute(
             select(Video).where(
                 and_(
@@ -254,7 +235,7 @@ class VoteService:
         return result.scalar_one_or_none()
 
     async def _get_existing_vote(self, user_id: str, video_id: str):
-        """Verifica si ya existe un voto de este usuario para este video"""
+        
         result = await self.db.execute(
             select(Voto).where(
                 and_(
@@ -266,23 +247,16 @@ class VoteService:
         return result.scalar_one_or_none()
 
     async def invalidate_rankings_on_vote(self):
-        """
-        Invalida el cache de rankings cuando hay un nuevo voto
-        y programa una actualización rápida de la tabla Ranking
-        """
+        
         try:
             # Invalidar cache inmediatamente
-            await self.invalidate_rankings_cache()
-            
-            # Programar actualización de tabla Ranking (opcional)
-            # from app.workers.ranking_tasks import update_rankings_task
-            # update_rankings_task.apply_async(countdown=30)  # Ejecutar en 30 segundos
+            await self.invalidate_rankings_cache()           
             
         except Exception as e:
             logger.warning(f"Error programando actualización de rankings: {str(e)}")
 
     async def invalidate_rankings_cache(self):
-        """Invalida todo el cache de rankings (útil cuando hay nuevos votos)"""
+        
         try:
             keys = self.redis_client.keys("rankings:*")
             if keys:
@@ -292,7 +266,7 @@ class VoteService:
             logger.warning(f"Error invalidando cache: {str(e)}")
 
     def _generate_cache_key(self, ciudad: str, skip: int, limit: int) -> str:
-        """Genera una clave única para el cache basada en los parámetros"""
+        
         base_key = "rankings"
         if ciudad:
             base_key += f":ciudad:{ciudad.lower().replace(' ', '_')}"
@@ -300,7 +274,7 @@ class VoteService:
         return base_key
 
     def _get_from_cache(self, cache_key: str):
-        """Obtiene datos del cache de Redis"""
+        
         try:
             cached_data = self.redis_client.get(cache_key)
             if cached_data:
@@ -311,7 +285,7 @@ class VoteService:
             return None
 
     def _set_to_cache(self, cache_key: str, data):
-        """Guarda datos en el cache de Redis"""
+        
         try:
             self.redis_client.setex(
                 cache_key,
@@ -322,7 +296,7 @@ class VoteService:
             logger.warning(f"Error guardando en cache: {str(e)}")
 
     def _get_current_season(self):
-        """Obtiene la temporada actual (ej: 2024-Q1)"""
+        
         now = datetime.now()
         year = now.year
         quarter = (now.month - 1) // 3 + 1

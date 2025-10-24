@@ -11,7 +11,6 @@ class Video(Base):
     jugador_id = Column(String(36), ForeignKey("Jugador.id", ondelete="CASCADE"), 
                        nullable=False, index=True)
     titulo = Column(String(255), nullable=False, index=True)
-    descripcion = Column(Text, nullable=True)
     archivo_original = Column(String(500), nullable=False, comment="Ruta en almacenamiento")
     archivo_procesado = Column(String(500), nullable=True, comment="Ruta del video procesado")
     duracion_original = Column(Integer, nullable=False, comment="Duración en segundos")
@@ -24,8 +23,6 @@ class Video(Base):
     resolucion_procesada = Column(String(20), nullable=True, comment="Resolución después de procesar")
     fecha_subida = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     fecha_procesamiento = Column(DateTime, nullable=True)
-    visibilidad = Column(MySQLEnum('publico', 'privado', name='video_visibilidad'), 
-                        nullable=False, default='publico', index=True)
     contador_vistas = Column(Integer, default=0, nullable=False)
     
     # Relaciones

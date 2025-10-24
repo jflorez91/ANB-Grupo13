@@ -53,7 +53,6 @@ CREATE TABLE IF NOT EXISTS Video (
     id CHAR(36) PRIMARY KEY,
     jugador_id CHAR(36) NOT NULL,
     titulo VARCHAR(255) NOT NULL,
-    descripcion TEXT NULL,
     archivo_original VARCHAR(500) NOT NULL COMMENT 'Ruta en almacenamiento',
     archivo_procesado VARCHAR(500) NULL COMMENT 'Ruta del video procesado',
     duracion_original INT NOT NULL COMMENT 'Duración en segundos',
@@ -65,13 +64,11 @@ CREATE TABLE IF NOT EXISTS Video (
     resolucion_procesada VARCHAR(20) NULL COMMENT 'Resolución después de procesar',
     fecha_subida DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     fecha_procesamiento DATETIME NULL,
-    visibilidad ENUM('publico', 'privado') NOT NULL DEFAULT 'publico',
     contador_vistas INT NOT NULL DEFAULT 0,
     FOREIGN KEY (jugador_id) REFERENCES Jugador(id) ON DELETE CASCADE,
     INDEX idx_video_jugador (jugador_id),
     INDEX idx_video_estado (estado),
     INDEX idx_video_fecha_subida (fecha_subida),
-    INDEX idx_video_visibilidad (visibilidad),
     INDEX idx_video_contador_vistas (contador_vistas DESC)
 );
 
@@ -109,21 +106,6 @@ CREATE TABLE IF NOT EXISTS Voto (
     UNIQUE KEY uk_voto_usuario_video (usuario_id, video_id) COMMENT 'Un usuario solo puede votar una vez por video'
 );
 
--- Tabla: SesionVoto
-CREATE TABLE IF NOT EXISTS SesionVoto (
-    id CHAR(36) PRIMARY KEY,
-    usuario_id CHAR(36) NOT NULL,
-    token_sesion VARCHAR(255) NOT NULL UNIQUE,
-    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    fecha_expiracion DATETIME NOT NULL,
-    activa BOOLEAN NOT NULL DEFAULT TRUE,
-    ip_address VARCHAR(45) NOT NULL,
-    FOREIGN KEY (usuario_id) REFERENCES Usuario(id) ON DELETE CASCADE,
-    INDEX idx_sesion_token (token_sesion),
-    INDEX idx_sesion_expiracion (fecha_expiracion),
-    INDEX idx_sesion_activa (activa),
-    INDEX idx_sesion_usuario (usuario_id)
-);
 
 -- Tabla: Ranking
 CREATE TABLE IF NOT EXISTS Ranking (

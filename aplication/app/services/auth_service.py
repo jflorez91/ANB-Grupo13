@@ -16,16 +16,16 @@ from app.models.jugador import JugadorCreate, JugadorResponse
 logger = logging.getLogger(__name__)
 
 class AuthService:
-    """Service que coordina CASOS DE USO de autenticación"""
+    
     
     def __init__(self, db: AsyncSession):
         self.db = db
 
     async def register_user(self, user_data: UserCreate, jugador_data: JugadorCreate = None):
-        """CASO DE USO: Registrar nuevo usuario (y jugador si aplica)"""
+        
         
         try:
-            # 1. Verificar si el usuario ya existe
+            #Verificar si el usuario ya existe
             logger.info(f"Intentando registrar usuario: {user_data.email}")
             result = await self.db.execute(
                 select(User).where(User.email == user_data.email)
@@ -39,7 +39,7 @@ class AuthService:
                     detail="El email ya está registrado"
                 )
 
-            # 2. Verificar que la ciudad existe (si es jugador)
+            #Verificar que la ciudad existe (si es jugador)
             if user_data.tipo == 'jugador' and jugador_data:
                 logger.info(f"Verificando ciudad: {jugador_data.ciudad_id}")
                 ciudad_result = await self.db.execute(
@@ -54,7 +54,7 @@ class AuthService:
                         detail="La ciudad especificada no existe"
                     )
 
-            # 3. Hash password con manejo de errores específico
+            #Hash password con manejo de errores específico
             logger.info("Hasheando contraseña...")
             try:
                 hashed_password = security_core.hash_password(user_data.password)
@@ -66,7 +66,7 @@ class AuthService:
                     detail=f"Error procesando la contraseña: {str(hash_error)}"
                 )
 
-            # 4. Crear usuario
+            #Crear usuario
             user_id = str(uuid.uuid4())
             user = User(
                 id=user_id,
@@ -81,7 +81,7 @@ class AuthService:
 
             self.db.add(user)
 
-            # 5. Si es jugador, crear registro en tabla Jugador
+            #Si es jugador, crear registro en tabla Jugador
             if user_data.tipo == 'jugador' and jugador_data:
                 logger.info("Creando registro de jugador...")
                 jugador = Jugador(
@@ -97,12 +97,12 @@ class AuthService:
                 )
                 self.db.add(jugador)
 
-            # 6. Commit de la transacción
+            #Commit de la transacción
             await self.db.commit()
             await self.db.refresh(user)
             logger.info(f"Usuario registrado exitosamente: {user_data.email}")
 
-            # 7. Preparar respuesta
+            #Preparar respuesta
             user_response = UserResponse(
                 id=user.id,
                 email=user.email,
@@ -130,12 +130,12 @@ class AuthService:
     
 
     async def authenticate_user(self, email: str, password: str):
-        """CASO DE USO: Autenticar usuario"""
+        
 
         try:
             logger.info(f"Intentando autenticar usuario: {email}")
 
-            # 1. Buscar usuario
+            #Buscar usuario
             result = await self.db.execute(
                 select(User).where(User.email == email)
             )
@@ -144,15 +144,15 @@ class AuthService:
             if not user:
                 logger.warning(f"Usuario no encontrado: {email}")
                 raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,  # ✅ Cambiado a 401
+                    status_code=status.HTTP_401_UNAUTHORIZED, 
                     detail="Credenciales inválidas"
                 )
 
-            # 2. Verificar contraseña
+            #Verificar contraseña
             if not security_core.verify_password(password, user.password_hash):
                 logger.warning(f"Contraseña incorrecta para usuario: {email}")
                 raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,  # ✅ Cambiado a 401
+                    status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Credenciales inválidas"
                 )
 
@@ -163,18 +163,18 @@ class AuthService:
                     detail="Usuario inactivo"
                 )
 
-            # 3. Actualizar último login
+            #Actualizar último login
             user.ultimo_login = datetime.utcnow()
             await self.db.commit()
             logger.info(f"Usuario autenticado exitosamente: {email}")
 
-            # 4. Generar token
+            #Generar token
             access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
             access_token = security_core.create_access_token(
                 data={"sub": str(user.id)}, expires_delta=access_token_expires
             )
 
-            # 5. Preparar respuesta del usuario
+            #Preparar respuesta del usuario
             user_response = UserResponse(
                 id=user.id,
                 email=user.email,

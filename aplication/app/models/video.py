@@ -9,15 +9,9 @@ class VideoEstado(str, Enum):
     procesado = "procesado"
     error = "error"
 
-class VideoVisibilidad(str, Enum):
-    publico = "publico"
-    privado = "privado"
     
 class VideoBase(BaseModel):
     titulo: str
-    descripcion: Optional[str] = None  # ✅ AGREGAR ESTE CAMPO
-    visibilidad: VideoVisibilidad = VideoVisibilidad.publico  # ✅ AGREGAR ESTE CAMPO
-
     @validator('titulo')
     def validate_titulo(cls, v):
         if not v or not v.strip():
@@ -44,10 +38,7 @@ class VideoResponse(VideoBase):
     class Config:
         from_attributes = True
 
-class VideoDetailResponse(VideoResponse):
-    """Respuesta extendida para detalle de video"""
-    descripcion: Optional[str] = None
-    visibilidad: VideoVisibilidad  
+class VideoDetailResponse(VideoResponse):    
     url_original: Optional[str] = None
     url_procesado: Optional[str] = None
     puede_eliminar: bool
