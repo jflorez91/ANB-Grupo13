@@ -6,7 +6,6 @@ from .video import Video
 from .procesamiento_video import ProcesamientoVideo
 from .voto import Voto
 from .ranking import Ranking
-from .sesion_voto import SesionVoto
 
 __all__ = [
     "Base", 
@@ -18,6 +17,5 @@ __all__ = [
     "Video", 
     "ProcesamientoVideo", 
     "Voto", 
-    "Ranking", 
-    "SesionVoto"
+    "Ranking"
 ]

@@ -21,7 +21,6 @@ class User(Base):
     # Relaciones
     jugador = relationship("Jugador", back_populates="usuario", uselist=False, cascade="all, delete-orphan")
     votos = relationship("Voto", back_populates="usuario", cascade="all, delete-orphan")
-    sesiones_voto = relationship("SesionVoto", back_populates="usuario", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email}, tipo={self.tipo})>"

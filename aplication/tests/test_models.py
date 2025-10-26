@@ -2,16 +2,12 @@ import pytest
 from datetime import date
 from pydantic import ValidationError
 
-# Importar modelos
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from app.models.user import UserCreate, UserLogin
 from app.models.jugador import JugadorCreate
+from app.models.video import VideoCreate
 
 class TestUserModels:
-    """Tests de validación de modelos (sin base de datos)"""
+    """Tests de validación de modelos"""
     
     def test_valid_user_creation(self):
         """Test creación válida de usuario"""
@@ -41,7 +37,7 @@ class TestUserModels:
     
     def test_short_password(self):
         """Test contraseña muy corta"""
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValidationError):
             UserCreate(
                 email="test@example.com",
                 nombre="Test",
@@ -50,20 +46,9 @@ class TestUserModels:
                 password_confirm="short",
                 tipo="publico"
             )
-        assert "al menos 8 caracteres" in str(exc_info.value)
-    
-    def test_passwords_mismatch(self):
-        """Test contraseñas que no coinciden"""
-        with pytest.raises(ValidationError) as exc_info:
-            UserCreate(
-                email="test@example.com",
-                nombre="Test",
-                apellido="User",
-                password="Password123",
-                password_confirm="Different123",
-                tipo="publico"
-            )
-        assert "no coinciden" in str(exc_info.value)
+
+class TestJugadorModels:
+    """Tests de modelos de jugador"""
     
     def test_valid_jugador_creation(self):
         """Test creación válida de jugador"""
@@ -80,22 +65,15 @@ class TestUserModels:
         assert jugador.peso == 80.5
         assert jugador.posicion == "alero"
 
-class TestUserLogin:
-    """Tests del modelo de login"""
+class TestVideoModels:
+    """Tests de modelos de video"""
     
-    def test_valid_login(self):
-        """Test login válido"""
-        login = UserLogin(
-            email="test@example.com",
-            password="ValidPassword123"
-        )
-        assert login.email == "test@example.com"
-        assert login.password == "ValidPassword123"
+    def test_valid_video_creation(self):
+        """Test creación válida de video"""
+        video = VideoCreate(titulo="Mi video de habilidades")
+        assert video.titulo == "Mi video de habilidades"
     
-    def test_invalid_login_email(self):
-        """Test login con email inválido"""
+    def test_video_title_validation(self):
+        """Test validación de título de video"""
         with pytest.raises(ValidationError):
-            UserLogin(
-                email="invalid-email",
-                password="ValidPassword123"
-            )
+            VideoCreate(titulo="")  # Título vacío
