@@ -1,0 +1,104 @@
+# =====================================
+# 🐍 PYTHON / FASTAPI PROJECT .gitignore
+# =====================================
+
+# --- Entornos virtuales ---
+venv/
+.env/
+.venv/
+env/
+ENV/
+
+# --- Dependencias y compilados ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.ppk
+# --- Archivos de logs ---
+*.log
+*.out
+*.err
+
+# --- Archivos temporales ---
+*.swp
+*.swo
+*.tmp
+*.bak
+*.old
+
+# --- Configuración de IDEs ---
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# --- Configuración del sistema operativo ---
+.DS_Store
+Thumbs.db
+
+# --- Archivos de bases de datos temporales ---
+*.db
+*.sqlite3
+
+# --- Pytest / Coverage ---
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.cache/
+nosetests.xml
+test-results/
+
+# --- Build / Distribution ---
+build/
+dist/
+*.egg-info/
+.eggs/
+MANIFEST
+
+# --- Documentación generada ---
+docs/_build/
+site/
+
+# --- Archivos de entorno ---
+# (importante: si usas variables secretas, asegúrate de tenerlas en .env)
+.env.local
+.env.dev
+.env.test
+.env.production
+
+# --- Docker ---
+*.pid
+*.seed
+*.pid.lock
+docker-compose.override.yml
+
+# --- VSCode / Configuración local ---
+.vscode/
+.settings/
+
+# --- Mypy / Pylint ---
+.mypy_cache/
+.dmypy.json
+.pyre/
+
+# --- Jupyter (por si usas notebooks para pruebas) ---
+.ipynb_checkpoints
+
+# --- Node.js (si tienes frontend en el mismo repo) ---
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# --- Archivos del sistema de control ---
+*.orig
+*.rej
+
+# --- FastAPI-specific (si usas Uvicorn) ---
+# Evitar incluir archivos generados por el servidor o auto reload
+*.pid
+
+# --- Storage (evitar subir videos y archivos procesados) ---
+/storage/processed/
+/storage/uploads/
