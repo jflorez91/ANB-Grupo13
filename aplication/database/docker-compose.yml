@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+ # MySQL Database
+  mysql-db:
+    image: mysql:8.0
+    container_name: anb-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: anb_rising_stars
+      MYSQL_USER: ANBAdmin
+      MYSQL_PASSWORD: ANB12345
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/02-schema.sql
+    command: 
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb_buffer_pool_size=256M
+    networks:
+      - anb-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uANBAdmin", "-pANB12345"]
+      timeout: 20s
+      retries: 10
+
+
+volumes:
+  mysql_data:
+
+# Red compartida
+networks:
+  anb-network:
+    driver: bridge
