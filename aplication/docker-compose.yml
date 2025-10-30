@@ -11,7 +11,7 @@ services:
     expose:
       - "8000"
     environment:
-      - DATABASE_URL=mysql+aiomysql://ANBAdmin:ANB12345@mysql-db:3306/anb_rising_stars
+      - DATABASE_URL=DATABASE_URL=mysql+aiomysql://ANBAdmin:ANB12345@ec2-54-236-19-23.compute-1.amazonaws.com:3306/anb_rising_stars
       - REDIS_URL=redis://redis:6379/0
     volumes:
       - ./storage:/storage

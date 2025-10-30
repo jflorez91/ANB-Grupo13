@@ -1,7 +1,4 @@
-version: '3.8'
-
 services:
-
   # Redis - Message Broker
   redis:
     image: redis:7-alpine
@@ -26,14 +23,19 @@ services:
 
   # Celery Worker
   celery_worker:
-    build: 
-      context: .
+    build:
+      context: ..
       dockerfile: Dockerfile
     container_name: anb-celery-worker
     restart: unless-stopped
-    command: celery -A app.workers.celery_app:celery_app worker --loglevel=info --concurrency=2 --queues=video_processing,maintenance,rankings --hostname=worker@%h
+    command: >
+      celery -A app.workers.celery_app:celery_app worker
+      --loglevel=info
+      --concurrency=2
+      --queues=video_processing,maintenance,rankings
+      --hostname=worker@%h
     environment:
-      - DATABASE_URL=mysql+aiomysql://ANBAdmin:ANB12345@mysql-db:3306/anb_rising_stars
+      - DATABASE_URL=mysql+aiomysql://ANBAdmin:ANB12345@ec2-54-236-19-23.compute-1.amazonaws.com:3306/anb_rising_stars
       - REDIS_URL=redis://redis:6379/0
       - PYTHONPATH=/app
     volumes:
@@ -41,8 +43,6 @@ services:
       - ./logs:/app/logs
     depends_on:
       redis:
-        condition: service_healthy
-      mysql-db:
         condition: service_healthy
     networks:
       - anb-network
@@ -52,16 +52,19 @@ services:
       timeout: 10s
       retries: 3
 
-  # Celery Beat
+# Celery Beat
   celery_beat:
-    build: 
-      context: .
+    build:
+      context: ..
       dockerfile: Dockerfile
     container_name: anb-celery-beat
     restart: unless-stopped
-    command: celery -A app.workers.celery_app:celery_app beat --loglevel=info --schedule=/tmp/celerybeat-schedule
+    command: >
+      celery -A app.workers.celery_app:celery_app beat
+      --loglevel=info
+      --schedule=/tmp/celerybeat-schedule
     environment:
-      - DATABASE_URL=mysql+aiomysql://ANBAdmin:ANB12345@mysql-db:3306/anb_rising_stars
+      - DATABASE_URL=mysql+aiomysql://ANBAdmin:ANB12345@ec2-54-236-19-23.compute-1.amazonaws.com:3306/anb_rising_stars
       - REDIS_URL=redis://redis:6379/0
       - PYTHONPATH=/app
     volumes:
@@ -71,12 +74,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      mysql-db:
-        condition: service_healthy
     networks:
       - anb-network
-
-
 
 volumes:
   redis_data:
