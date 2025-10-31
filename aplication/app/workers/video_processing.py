@@ -3,6 +3,7 @@ import subprocess
 import logging
 import uuid
 from datetime import datetime
+from app.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -59,10 +60,10 @@ def process_video_sync(video_id: str, task_callback=None):
         logger.info(f"🎬 Iniciando procesamiento de video {video_id}")
         
         # 1. VERIFICAR ARCHIVO ORIGINAL
-        input_path = f"/storage/uploads/videos/originales/{video_id}.mp4"
+        input_path = f"{settings.UPLOAD_DIR}/videos/originales/{video_id}.mp4"
         if not os.path.exists(input_path):
             import glob
-            pattern = f"/storage/uploads/videos/originales/{video_id}.*"
+            pattern = f"{settings.UPLOAD_DIR}/videos/originales/{video_id}.*"
             matching_files = glob.glob(pattern)
             if not matching_files:
                 raise FileNotFoundError(f"Video original no encontrado: {pattern}")
@@ -72,7 +73,7 @@ def process_video_sync(video_id: str, task_callback=None):
         if task_callback:
             task_callback(state='PROGRESS', meta={'current': 30, 'total': 100, 'status': 'Recortando video'})
         
-        temp_video_path = f"/storage/processed/videos/{video_id}_temp.mp4"
+        temp_video_path = f"{settings.PROCESSED_DIR}/videos/{video_id}_temp.mp4"
         os.makedirs(os.path.dirname(temp_video_path), exist_ok=True)
         
         cmd_recortar = [
@@ -95,7 +96,7 @@ def process_video_sync(video_id: str, task_callback=None):
         if task_callback:
             task_callback(state='PROGRESS', meta={'current': 60, 'total': 100, 'status': 'Añadiendo logo NBA'})
         
-        final_video_path = f"/storage/processed/videos/{video_id}_final.mp4"
+        final_video_path = f"{settings.PROCESSED_DIR}/videos/{video_id}_final.mp4"
         logo_path = "/storage/assets/logoANB.png"
         
         if not os.path.exists(logo_path):

@@ -14,14 +14,18 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
     # Database
-    DATABASE_URL: str = "mysql+aiomysql://anb_app_user:StrongPassword123!@localhost/anb_rising_stars"
+    #DATABASE_URL: str = "mysql+aiomysql://anb_app_user:StrongPassword123!@localhost/anb_rising_stars"
+
+    DATABASE_URL: str = "mysql+aiomysql://anb_app_user:StrongPassword123!@ec2-34-227-78-151.compute-1.amazonaws.com:3306/anb_rising_stars"
     
     # Redis (Celery broker)
     REDIS_URL: str = "redis://localhost:6379/0"
     
     # File Storage
-    UPLOAD_DIR: str = "/storage/uploads"
-    PROCESSED_DIR: str = "/storage/processed"
+    #UPLOAD_DIR: str = "/storage/uploads"
+    #PROCESSED_DIR: str = "/storage/processed"
+    UPLOAD_DIR: str = "/home/ubuntu/storage/uploads"
+    PROCESSED_DIR: str = "/home/ubuntu/storage/processed"
     MAX_FILE_SIZE: int = 100 * 1024 * 1024  # 100MB
     ALLOWED_EXTENSIONS: List[str] = ["mp4"]
     
