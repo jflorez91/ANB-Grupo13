@@ -1,9 +1,6 @@
-version: '3.8'
-
 services:
-  # API FastAPI
   api:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     container_name: anb-api
@@ -11,19 +8,14 @@ services:
     expose:
       - "8000"
     environment:
-      - DATABASE_URL=DATABASE_URL=mysql+aiomysql://ANBAdmin:ANB12345@ec2-54-236-19-23.compute-1.amazonaws.com:3306/anb_rising_stars
-      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=mysql+aiomysql://ANBAdmin:ANB12345@ec2-54-236-19-23.compute-1.amazonaws.com:3306/anb_rising_stars
+      - REDIS_URL=redis://ec2-18-207-92-94.compute-1.amazonaws.com:6379/0
     volumes:
       - ./storage:/storage
       - ./logs:/app/logs
-    depends_on:
-      mysql-db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     command: >
       sh -c "python scripts/wait_for_db.py &&
-             uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
+      uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
     networks:
       - anb-network
     healthcheck:
@@ -31,7 +23,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-
  
   # Locust - Pruebas de Carga
   locust:
