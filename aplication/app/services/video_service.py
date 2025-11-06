@@ -58,7 +58,7 @@ class VideoService:
             logger.info(f"Video ID generado: {video_id}")
             
             #Guardar archivo manualmente USANDO EL VIDEO_ID
-            file_path = f"/storage/uploads/videos/originales/{video_id}.mp4"
+            file_path = f"{settings.UPLOAD_DIR}/videos/originales/{video_id}.mp4"
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
             
             #Guardar archivo
@@ -138,8 +138,8 @@ class VideoService:
                 )
 
             #Construir URLs para el video (si está procesado)
-            url_original = f"/storage/uploads/videos/originales/{video.id}.mp4" if video.archivo_original else None
-            url_procesado = f"/storage/processed/videos/{video.id}_final.mp4" if video.archivo_procesado else None
+            url_original = f"{settings.UPLOAD_DIR}/videos/originales/{video.id}.mp4" if video.archivo_original else None
+            url_procesado = f"{settings.PROCESSED_DIR}/videos/{video.id}_final.mp4" if video.archivo_procesado else None
 
             #Determinar si se puede eliminar
             puede_eliminar = self._puede_eliminar_video(video)
