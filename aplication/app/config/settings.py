@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     # Database
     #DATABASE_URL: str = "mysql+aiomysql://anb_app_user:StrongPassword123!@localhost/anb_rising_stars"
 
-    DATABASE_URL: str = "mysql+aiomysql://anb_app_user:StrongPassword123!@ec2-34-227-78-151.compute-1.amazonaws.com:3306/anb_rising_stars"
+    DATABASE_URL: str = "mysql+aiomysql://anb_app_user:StrongPassword123!@db-instance-anb.cra7zjgxuryo.us-east-1.rds.amazonaws.com:3306/anb_rising_stars"
     
     # Redis (Celery broker)
     REDIS_URL: str = "redis://localhost:6379/0"
