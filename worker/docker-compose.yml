@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: anb-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --bind 0.0.0.0 --protected-mode no
+    volumes:
+      - redis_data:/data
+    networks:
+      - anb-worker-network
+
+  video-processor:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: anb-video-processor
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=mysql+pymysql://ANBAdmin:ANB12345@db-instance-anb.cra7zjgxuryo.us-east-1.rds.amazonaws.com:3306/anb_rising_stars
+      - REDIS_URL=redis://redis:6379/0
+      - UPLOAD_DIR=/storage/uploads
+      - PROCESSED_DIR=/storage/processed
+    volumes:
+      - /home/ubuntu/storage/uploads:/storage/uploads
+      - /home/ubuntu/storage/processed:/storage/processed
+    depends_on:
+      - redis
+    networks:
+      - anb-worker-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  celery-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: anb-celery-worker
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=mysql+pymysql://ANBAdmin:ANB12345@db-instance-anb.cra7zjgxuryo.us-east-1.rds.amazonaws.com:3306/anb_rising_stars
+      - REDIS_URL=redis://redis:6379/0
+    command: >
+      sh -c "celery -A app.workers.celery_app worker 
+             --loglevel=info 
+             --concurrency=2 
+             --queues=video_processing,rankings"
+    depends_on:
+      - redis
+      - video-processor
+    networks:
+      - anb-worker-network
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: anb-celery-beat
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=mysql+pymysql://ANBAdmin:ANB12345@db-instance-anb.cra7zjgxuryo.us-east-1.rds.amazonaws.com:3306/anb_rising_stars
+      - REDIS_URL=redis://redis:6379/0
+    command: >
+      sh -c "celery -A app.workers.celery_app beat 
+             --loglevel=info 
+             --schedule=/tmp/celerybeat-schedule"
+    depends_on:
+      - redis
+    networks:
+      - anb-worker-network
+
+volumes:
+  redis_data:
+
+networks:
+  anb-worker-network:
+    driver: bridge

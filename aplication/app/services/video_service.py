@@ -81,21 +81,11 @@ class VideoService:
             )
     
             # Crear registro de procesamiento
-            procesamiento = await self._create_processing_record(video.id)
-    
-            #INICIAR PROCESAMIENTO ASÍNCRONO CON CELERY
-            task = process_video_task.delay(str(video.id))
-            
-            #Actualizar el registro con el ID de la tarea Celery
-            procesamiento.tarea_id = task.id
-            await self.db.commit()
-    
-            logger.info(f"Video {video.id} creado y tarea Celery {task.id} iniciada")
-    
+            await self._create_processing_record(video.id)
+        
             #Preparar respuesta según especificación
             return VideoUploadResponse(
-                message="Video subido correctamente. Procesamiento en curso.",
-                task_id=task.id
+                message="Video subido correctamente. Procesamiento en curso."
             )
     
         except HTTPException:

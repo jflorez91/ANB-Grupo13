@@ -9,9 +9,12 @@ services:
       - "8000"
     environment:
       - DATABASE_URL=mysql+aiomysql://ANBAdmin:ANB12345@db-instance-anb.cra7zjgxuryo.us-east-1.rds.amazonaws.com:3306/anb_rising_stars
-#      - REDIS_URL=redis://ec2-18-207-92-94.compute-1.amazonaws.com:6379/0
+      - UPLOAD_DIR=/storage/uploads
+      - PROCESSED_DIR=/storage/processed
     volumes:
-      - ./storage:/storage
+      - /home/ubuntu/storage/uploads:/storage/uploads
+      - /home/ubuntu/storage/processed:/storage/processed
+      - /home/ubuntu/storage/assets:/storage/assets
       - ./logs:/app/logs
     command: >
       sh -c "python scripts/wait_for_db.py &&
