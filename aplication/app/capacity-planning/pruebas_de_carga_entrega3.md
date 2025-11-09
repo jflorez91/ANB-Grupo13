@@ -1,6 +1,6 @@
 # ANÁLISIS DE CAPACIDAD – ENTREGA 3  
 **Proyecto:** ANB Rising Stars Showcase  
-**Autor:** Esteban Leal  
+**Autor:** Grupo 13  
 **Programa:** Maestría en Ingeniería de Software – Universidad de los Andes  
 **Fecha:** 09/11/2025  
 **Herramienta de prueba:** Locust 2.32.2  
