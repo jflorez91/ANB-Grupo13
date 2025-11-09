@@ -24,6 +24,14 @@
   - **Correció y actualización prototipo backend**
   - **Ajuste pruebas de carga y alistamiento de pruebas en ambiente cloud**
   - **Implementación de instancias con EC2 de AWS**
+- **Semana 4 y 5**
+  - **Implementación de escalabilidad capa web**
+  - **Implementación de balanceadores de carga**
+  - **Implementación plantilla de autoescalado**
+  - **Implementación de Monitoreo de Instancias**
+  - **Creación Bucket S3**
+  - **Docuemntación arquitectura de aplicación**
+  - **Plan de pruebas de estres, analisis y documentación**
 
 ## 🟩 Estructura de carpetas del Repo
 ```text
@@ -64,5 +72,6 @@ La documentación del proyecto lo puede encontrar en la ruta (/docs/Entrega_1) d
 - **Diagrama de componentes** (/docs/Entrega_1/Diagrama de componentes)
 - **Diagrama de flujo de procesos** (/docs/Entrega_1/Diagrama de flujo de procesos)
 - **Despliegue y documentación** (/aplication/app/ConsideracionesDespliegue)
+
 
 
