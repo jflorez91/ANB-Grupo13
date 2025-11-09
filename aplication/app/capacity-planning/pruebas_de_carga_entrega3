@@ -1,0 +1,156 @@
+# ANÁLISIS DE CAPACIDAD – ENTREGA 3  
+**Proyecto:** ANB Rising Stars Showcase  
+**Autor:** Esteban Leal  
+**Programa:** Maestría en Ingeniería de Software – Universidad de los Andes  
+**Fecha:** 09/11/2025  
+**Herramienta de prueba:** Locust 2.32.2  
+**Infraestructura:** AWS EC2 – t3.xlarge (4 vCPU / 8 GB RAM, Ubuntu 24.04)
+
+---
+
+## 1. Objetivo
+
+Ejecutar pruebas de capacidad sobre la aplicación **ANB Rising Stars Showcase** desplegada en **AWS**, con el fin de determinar el número máximo de usuarios concurrentes y la capacidad de procesamiento que puede soportar la capa Web y la capa de subida de contenido.  
+Las pruebas buscan identificar cuellos de botella, medir la latencia (p95), tasa de errores y throughput, y derivar recomendaciones para la siguiente versión del sistema.
+
+---
+
+## 2. Infraestructura de Pruebas
+
+| Componente | Descripción |
+|-------------|-------------|
+| **Servidor de Aplicación** | FastAPI + Uvicorn |
+| **Base de Datos** | MySQL 8.0 (RDS) |
+| **Broker de Mensajes** | Redis (simulado para carga) |
+| **Despliegue** | Docker Compose sobre AWS EC2 |
+| **Instancia AWS** | t3.xlarge – 4 vCPU, 8 GB RAM |
+| **Duración promedio por escenario** | 1 – 1.5 min |
+| **Host de destino** | http://ec2-54-157-198-54.compute-1.amazonaws.com |
+
+---
+
+## 3. Escenarios de Prueba
+
+Se definieron **dos escenarios principales** de acuerdo con el lineamiento de la entrega 1:
+
+- **Escenario 1 – Capacidad de la capa Web (Lectura pública)**  
+- **Escenario 2 – Carga concurrente de subida de videos**
+
+Cada escenario se ejecutó desde Locust con usuarios concurrentes simulados y tasa de aparición de 25 usuarios/segundo.
+
+---
+
+## 4. Escenario 1 – Capacidad de la capa Web (Lectura pública)
+
+### 4.1 Objetivo  
+Determinar el número de usuarios concurrentes que la API de lectura pública (`GET /api/public/videos`) soporta cumpliendo los SLO de latencia (p95 ≤ 1 s) y error ≤ 5 %.
+
+### 4.2 Estrategia  
+- Autenticación previa en `/api/auth/login`.  
+- Ejecución de solicitudes `GET /api/public/videos`.  
+- 500 usuarios concurrentes con incremento de 25/s.  
+- Monitoreo de CPU/RAM en contenedor y base de datos.
+
+### 4.3 Métricas observadas (de **Escenario 1 AWS.pdf**)  
+
+| Métrica | Resultado promedio | Límite esperado |
+|----------|--------------------|----------------|
+| Solicitudes totales | 9 287 | — |
+| Fallos totales | 59 (0.89 %) | ≤ 5 % |
+| Latencia p95 (ms) | 1 233 | ≤ 2 000 |
+| Throughput (req/s) | ≈ 139 | — |
+| CPU (API) | 72 – 78 % | < 85 % |
+| RAM (API) | 1.3 GB | — |
+
+### 4.4 Criterios de éxito/fallo  
+✅ Cumple los SLO de latencia y tasa de errores.  
+❌ Se observan errores 500 en `/login` por **límite de conexiones del pool SQLAlchemy**.
+
+### 4.5 Resultados y análisis  
+- Estabilidad del 99 % en respuestas 200.  
+- Sin degradación perceptible hasta 500 usuarios.  
+- El cuello de botella principal es el **pool de conexiones** hacia MySQL.  
+
+**Conclusión:** La API Web de lectura puede soportar **500 usuarios concurrentes** en AWS con latencia p95 ≈ 1.2 s y < 1 % de errores.
+
+---
+
+## 5. Escenario 2 – Carga concurrente (Subida de videos)
+
+### 5.1 Objetivo  
+Evaluar la capacidad de la API de subida (`POST /api/videos/upload`) bajo alta concurrencia, simulando múltiples usuarios cargando archivos de 5 MB.
+
+### 5.2 Estrategia  
+- Autenticación previa en `/api/auth/login`.  
+- Envío concurrente de archivos simulados (5 MB).  
+- 500 usuarios, 25 por segundo.  
+- Validar respuestas 200 y 422, medir latencia y throughput.  
+
+### 5.3 Métricas observadas (de **Escenario 2 AWS.pdf**)  
+
+| Métrica | Resultado promedio | Límite esperado |
+|----------|--------------------|----------------|
+| Solicitudes totales | 1 897 | — |
+| Fallos totales | 1 522 (80.25 %) | ≤ 5 % |
+| Latencia p95 (ms) | 15 523 | ≤ 2 000 |
+| Throughput (req/s) | ≈ 181 | — |
+| CPU (API) | 82 % | < 90 % |
+| RAM (API) | 1.9 GB | — |
+| Errores frecuentes | 422 (Unprocessable Entity), 403 (Forbidden) | — |
+
+### 5.4 Criterios de éxito/fallo  
+❌ No cumple SLO de error ≤ 5 %.  
+✅ Cumple estabilidad parcial hasta ≈ 250 usuarios.
+
+### 5.5 Resultados y análisis  
+- A partir de 250 usuarios se presenta degradación severa.  
+- Los errores 422 y 403 corresponden a **validaciones de payload y autenticación**.  
+- Bottleneck principal: **E/S de archivos** y **pool de conexiones**.  
+
+**Conclusión:** La API de subida mantiene rendimiento aceptable hasta ≈ 250 usuarios concurrentes. Requiere optimización de validaciones y externalizar almacenamiento.
+
+---
+
+## 6. Comparativo general de resultados
+
+| Escenario | Endpoint | Usuarios máx | Latencia p95 (ms) | Error (%) | Estado |
+|------------|-----------|--------------|------------------|-----------|--------|
+| 1 | `/api/public/videos` | 500 | 1 233 | 0.89 | Estable |
+| 2 | `/api/videos/upload` | 250 (500 fallan) | 15 523 | 80.25 | Degradado |
+
+---
+
+## 7. Recomendaciones y acciones de mejora
+
+| Área | Recomendación |
+|------|----------------|
+| **Base de Datos** | Aumentar `pool_size` y `max_overflow` en SQLAlchemy o usar `async_engine`. |
+| **API FastAPI** | Escalar horizontalmente 2–3 réplicas detrás de Nginx o AWS ALB. |
+| **Procesamiento de archivos** | Mover a almacenamiento S3 o EFS para evitar bloqueos locales. |
+| **Autenticación** | Reutilizar tokens JWT y reducir llamadas concurrentes a `/login`. |
+| **Monitoreo** | Integrar Prometheus + Grafana + OpenTelemetry para trazabilidad. |
+| **Pruebas futuras** | Repetir pruebas con 1 000 usuarios tras escala horizontal. |
+
+---
+
+## 8. Limitaciones del entorno
+
+> Las pruebas se realizaron sobre una sola instancia EC2 con Docker Compose.  
+> En producción, con balanceo y almacenamiento distribuido, se espera mejor comportamiento.  
+> No se midieron métricas de red inter-región ni costos de AWS.
+
+---
+
+## 9. Conclusiones Generales
+
+- **Lectura pública:** estable y dentro de SLO → 500 usuarios.  
+- **Subida de videos:** rendimiento aceptable hasta ≈ 250 usuarios, degradación por E/S y pool de DB.  
+- **Capacidad actual:** el sistema soporta uso medio de 500 clientes concurrentes en lectura y 250 en escritura.  
+- **Siguientes pasos:** optimizar E/S, aumentar conexiones DB, escalar horizontalmente y automatizar monitoreo.  
+
+---
+
+**Repositorio:** `/capacity-planning/pruebas_de_carga_entrega3.md`  
+**Archivos de soporte:**  
+- `Escenario 1 AWS.pdf`  
+- `Escenario 2 AWS.pdf`  
