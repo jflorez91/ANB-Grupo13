@@ -74,6 +74,22 @@ services:
       - redis
     networks:
       - anb-worker-network
+  locust:
+    image: locustio/locust:2.30.0
+    container_name: anb-locust
+    restart: unless-stopped
+    ports:
+      - "8089:8089"
+    environment:
+      - LOCUST_HOST=http://ec2-54-157-198-54.compute-1.amazonaws.com
+    volumes:
+      - ./load-tests:/mnt/locust/load-tests
+    command: >
+      locust -f /mnt/locust/load-tests/locustfile.py --web-host 0.0.0.0
+    networks:
+      - anb-worker-network
+    depends_on:
+      - redis
 
 volumes:
   redis_data:
