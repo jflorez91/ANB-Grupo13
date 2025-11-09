@@ -63,8 +63,8 @@ Determinar el número de usuarios concurrentes que la API de lectura pública (`
 | RAM (API) | 1.3 GB | — |
 
 ### 4.4 Criterios de éxito/fallo  
-✅ Cumple los SLO de latencia y tasa de errores.  
-❌ Se observan errores 500 en `/login` por **límite de conexiones del pool SQLAlchemy**.
+ Cumple los SLO de latencia y tasa de errores.  
+ Se observan errores 500 en `/login` por **límite de conexiones del pool SQLAlchemy**.
 
 ### 4.5 Resultados y análisis  
 - Estabilidad del 99 % en respuestas 200.  
@@ -99,8 +99,8 @@ Evaluar la capacidad de la API de subida (`POST /api/videos/upload`) bajo alta c
 | Errores frecuentes | 422 (Unprocessable Entity), 403 (Forbidden) | — |
 
 ### 5.4 Criterios de éxito/fallo  
-❌ No cumple SLO de error ≤ 5 %.  
-✅ Cumple estabilidad parcial hasta ≈ 250 usuarios.
+ No cumple SLO de error ≤ 5 %.  
+Cumple estabilidad parcial hasta ≈ 250 usuarios.
 
 ### 5.5 Resultados y análisis  
 - A partir de 250 usuarios se presenta degradación severa.  
@@ -148,9 +148,3 @@ Evaluar la capacidad de la API de subida (`POST /api/videos/upload`) bajo alta c
 - **Capacidad actual:** el sistema soporta uso medio de 500 clientes concurrentes en lectura y 250 en escritura.  
 - **Siguientes pasos:** optimizar E/S, aumentar conexiones DB, escalar horizontalmente y automatizar monitoreo.  
 
----
-
-**Repositorio:** `/capacity-planning/pruebas_de_carga_entrega3.md`  
-**Archivos de soporte:**  
-- `Escenario 1 AWS.pdf`  
-- `Escenario 2 AWS.pdf`  
