@@ -11,14 +11,18 @@ services:
       - DATABASE_URL=mysql+aiomysql://ANBAdmin:ANB12345@db-instance-anb.cra7zjgxuryo.us-east-1.rds.amazonaws.com:3306/anb_rising_stars
       - UPLOAD_DIR=/storage/uploads
       - PROCESSED_DIR=/storage/processed
+      - AWS_ACCESS_KEY_ID=ASIAVHCYSUUPEUKCOEL6
+      - AWS_SECRET_ACCESS_KEY=qOWNR0nVbho8jUSROyLBvhBoCSYbYCevkzSm4MFt
+      - AWS_REGION=us-east-1
+      - S3_BUCKET_NAME=anb-aws3-bucket
+      - S3_UPLOAD_PREFIX=uploads/videos/originales
+      - S3_PROCESSED_PREFIX=processed/videos
+      - S3_ASSETS_PREFIX=assets
     volumes:
       - /home/ubuntu/storage/uploads:/storage/uploads
       - /home/ubuntu/storage/processed:/storage/processed
       - /home/ubuntu/storage/assets:/storage/assets
       - ./logs:/app/logs
-    command: >
-      sh -c "python scripts/wait_for_db.py &&
-      uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
     networks:
       - anb-network
     healthcheck:
