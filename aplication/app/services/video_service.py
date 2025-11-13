@@ -15,6 +15,7 @@ from app.models.video import VideoCreate, VideoResponse, VideoUploadResponse, Vi
 from app.core.storage import validate_video_file
 from app.config.settings import settings
 from app.workers.video_tasks import process_video_task
+from app.core.s3_client import s3_client
 
 logger = logging.getLogger(__name__)
 
@@ -59,13 +60,16 @@ class VideoService:
             
             #Guardar archivo manualmente USANDO EL VIDEO_ID
             file_path = f"{settings.UPLOAD_DIR}/videos/originales/{video_id}.mp4"
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            #os.makedirs(os.path.dirname(file_path), exist_ok=True)
             
             #Guardar archivo
-            with open(file_path, "wb") as buffer:
-                buffer.write(content)
+            #with open(file_path, "wb") as buffer:
+            #    buffer.write(content)
     
-            logger.info(f"Archivo guardado en: {file_path}")
+            #logger.info(f"Archivo guardado en: {file_path}")
+            s3_key_original = f"{settings.S3_UPLOAD_PREFIX}/{video_id}.mp4"
+            file_url = await s3_client.upload_file(content, s3_key_original, "video/mp4")
+
             
             #Obtener metadatos del video (duración real)
             video_metadata = await self._get_video_metadata(file_path)
@@ -75,7 +79,7 @@ class VideoService:
                 video_id=video_id,
                 jugador_id=jugador.id,
                 video_data=video_data,
-                file_path=file_path,
+                file_path=file_url,
                 metadata=video_metadata,
                 original_filename=file.filename
             )

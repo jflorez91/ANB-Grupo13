@@ -36,6 +36,18 @@ class Settings(BaseSettings):
     MAX_VIDEO_DURATION: int = 480  # 5 minutos máximo original
     TARGET_DURATION: int = 30      # 30 segundos procesado
     TARGET_RESOLUTION: str = "1280x720"
+
+
+    # Amazon S3 Configuration
+    AWS_ACCESS_KEY_ID: str = "ASIAVHCYSUUPEUKCOEL6"
+    AWS_SECRET_ACCESS_KEY: str = "qOWNR0nVbho8jUSROyLBvhBoCSYbYCevkzSm4MFt"
+    AWS_REGION: str = "us-east-1"
+    S3_BUCKET_NAME: str = "anb-aws3-bucket"
+    
+    # S3 Paths
+    S3_UPLOAD_PREFIX: str = "uploads/videos/originales"
+    S3_PROCESSED_PREFIX: str = "processed/videos"
+    S3_ASSETS_PREFIX: str = "assets"
     
     class Config:
         env_file = ".env"
