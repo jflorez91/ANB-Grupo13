@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     # Amazon S3 Configuration
     AWS_ACCESS_KEY_ID: str = "ASIAVHCYSUUPEUKCOEL6"
     AWS_SECRET_ACCESS_KEY: str = "qOWNR0nVbho8jUSROyLBvhBoCSYbYCevkzSm4MFt"
+    AWS_SESSION_TOKEN: Optional[str] = None
     AWS_REGION: str = "us-east-1"
     S3_BUCKET_NAME: str = "anb-aws3-bucket"
     
