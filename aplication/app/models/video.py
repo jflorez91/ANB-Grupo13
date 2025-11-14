@@ -48,7 +48,6 @@ class VideoDetailResponse(VideoResponse):
 
 class VideoUploadResponse(BaseModel):
     message: str = "Video subido correctamente. Procesamiento en curso."
-    task_id: str
 
 class VideoDeleteResponse(BaseModel):
     message: str
