@@ -2,7 +2,7 @@ from sqlalchemy import Column, String, Integer, BigInteger, DateTime, Boolean, F
 from sqlalchemy.dialects.mysql import ENUM as MySQLEnum
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from config.database import Base
+from app.config.database import Base
 
 class Video(Base):
     __tablename__ = "Video"

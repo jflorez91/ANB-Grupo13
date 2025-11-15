@@ -2,6 +2,7 @@ import logging
 from celery import current_task
 from app.workers.celery_app import celery_app
 from app.workers.processor_service import ProcessorService
+from app.workers.video_processing import process_video_s3
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ def process_pending_videos_task(self):
         logger.info("🔍 Buscando videos pendientes de procesamiento...")
         
         processor = ProcessorService()
-        result = processor.process_videos()
+        result = processor.process_pending_videos()  # ✅ MÉTODO CORREGIDO
         
         logger.info(f"✅ Procesamiento completado. Resultado: {result}")
         return {
@@ -45,8 +46,10 @@ def process_single_video_task(self, video_id: str):
         processor = ProcessorService()
         
         # Buscar el procesamiento para este video
-        with processor.SessionLocal() as session:
-            from app.schemas.procesamiento_video import ProcesamientoVideo
+        from app.config.database import SessionLocal
+        from app.schemas.procesamiento_video import ProcesamientoVideo
+        
+        with SessionLocal() as session:
             procesamiento = session.query(ProcesamientoVideo).filter(
                 ProcesamientoVideo.video_id == video_id
             ).first()
@@ -56,7 +59,7 @@ def process_single_video_task(self, video_id: str):
             
             # Claim y procesar
             processor.claim_video_processing(procesamiento.id)
-            result = processor.process_video_sync(video_id)
+            result = process_video_s3(video_id)  # ✅ Procesar directamente
             
             if result['success']:
                 processor.mark_video_completed(video_id, result)

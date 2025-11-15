@@ -1,14 +1,12 @@
 import logging
 import uuid
 from datetime import datetime
-from sqlalchemy import create_engine, select, update
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import select, update
 
-from app.config.settings import settings
+from app.config.database import SessionLocal, get_db
 from app.schemas.procesamiento_video import ProcesamientoVideo
 from app.schemas.video import Video
 from app.workers.video_processing import process_video_s3
-from app.config.database import SessionLocal
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +15,8 @@ class ProcessorService:
         pass
         
     def get_pending_videos(self):
-        """Obtener videos pendientes de procesamiento (sin tarea_id)"""
-        with SessionLocal() as session:  # ✅ Usar SessionLocal importado
+        """Obtener videos pendientes de procesamiento"""
+        with SessionLocal() as session:
             result = session.execute(
                 select(ProcesamientoVideo)
                 .where(
@@ -30,7 +28,7 @@ class ProcessorService:
             return result.scalars().all()
     
     def claim_video_processing(self, procesamiento_id: str):
-        """Marcar un video como siendo procesado (asignar tarea_id)"""
+        """Marcar un video como siendo procesado"""
         with SessionLocal() as session:
             tarea_id = str(uuid.uuid4())
             session.execute(
@@ -58,11 +56,11 @@ class ProcessorService:
             processed_count = 0
             for procesamiento in pending_videos:
                 try:
-                    # Claim el video (asignar tarea_id)
+                    # Claim el video
                     tarea_id = self.claim_video_processing(procesamiento.id)
                     logger.info(f"🎬 Procesando video {procesamiento.video_id} - Tarea: {tarea_id}")
                     
-                    # ✅ Procesar el video CON S3
+                    # Procesar el video CON S3
                     result = process_video_s3(str(procesamiento.video_id))
                     
                     if result['success']:
@@ -106,10 +104,10 @@ class ProcessorService:
                 .where(Video.id == video_id)
                 .values(
                     estado='procesado',
-                    archivo_procesado=result['s3_key_processed'],
-                    s3_url_procesado=result['s3_url_processed'],
-                    duracion_procesada=result['duracion_procesada'],
-                    resolucion_procesada=result['resolucion_procesada'],
+                    archivo_procesado=result.get('s3_key_processed'),
+                    s3_url_procesado=result.get('s3_url_processed'),
+                    duracion_procesada=result.get('duracion_procesada'),
+                    resolucion_procesada=result.get('resolucion_procesada'),
                     fecha_procesamiento=datetime.utcnow()
                 )
             )
