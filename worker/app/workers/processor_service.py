@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 from sqlalchemy import select, update
 
-from app.config.database import SessionLocal, get_db
+from app.config.database import SessionLocal
 from app.schemas.procesamiento_video import ProcesamientoVideo
 from app.schemas.video import Video
 from app.workers.video_processing import process_video_s3
@@ -15,7 +15,7 @@ class ProcessorService:
         pass
         
     def get_pending_videos(self):
-        """Obtener videos pendientes de procesamiento"""
+        """Obtener videos pendientes de procesamiento (sin tarea_id)"""
         with SessionLocal() as session:
             result = session.execute(
                 select(ProcesamientoVideo)
@@ -28,7 +28,7 @@ class ProcessorService:
             return result.scalars().all()
     
     def claim_video_processing(self, procesamiento_id: str):
-        """Marcar un video como siendo procesado"""
+        """Marcar un video como siendo procesado (asignar tarea_id)"""
         with SessionLocal() as session:
             tarea_id = str(uuid.uuid4())
             session.execute(
@@ -56,11 +56,11 @@ class ProcessorService:
             processed_count = 0
             for procesamiento in pending_videos:
                 try:
-                    # Claim el video
+                    # Claim el video (asignar tarea_id)
                     tarea_id = self.claim_video_processing(procesamiento.id)
                     logger.info(f"🎬 Procesando video {procesamiento.video_id} - Tarea: {tarea_id}")
                     
-                    # Procesar el video CON S3
+                    # ✅ Procesar el video CON S3
                     result = process_video_s3(str(procesamiento.video_id))
                     
                     if result['success']:
