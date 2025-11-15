@@ -21,7 +21,6 @@ class ProcessorService:
                 select(ProcesamientoVideo)
                 .where(
                     ProcesamientoVideo.estado == 'pendiente',
-                    ProcesamientoVideo.tarea_id.is_(None)
                 )
                 .limit(5)
             )
