@@ -1,21 +1,22 @@
-from app.config.database import Base, get_db, engine
+# ✅ En su lugar, importar solo lo necesario:
+from app.config.database import Base
+
+# Importar modelos individualmente
 from .user import User
 from .jugador import Jugador
-from .ciudad import Ciudad
 from .video import Video
-from .procesamiento_video import ProcesamientoVideo
 from .voto import Voto
 from .ranking import Ranking
+from .ciudad import Ciudad
+from .procesamiento_video import ProcesamientoVideo
 
 __all__ = [
-    "Base", 
-    "get_db", 
-    "engine",
+    "Base",
     "User", 
-    "Jugador", 
-    "Ciudad", 
-    "Video", 
-    "ProcesamientoVideo", 
+    "Jugador",
+    "Video",
     "Voto", 
-    "Ranking"
+    "Ranking",
+    "Ciudad",
+    "ProcesamientoVideo"
 ]

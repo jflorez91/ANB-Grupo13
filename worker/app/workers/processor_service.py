@@ -8,38 +8,37 @@ from app.config.settings import settings
 from app.schemas.procesamiento_video import ProcesamientoVideo
 from app.schemas.video import Video
 from app.workers.video_processing import process_video_s3
+from app.config.database import SessionLocal
 
 logger = logging.getLogger(__name__)
 
 class ProcessorService:
     def __init__(self):
-        self.db_url = settings.DATABASE_URL.replace('aiomysql', 'pymysql')
-        self.engine = create_engine(self.db_url)
-        self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+        pass
         
     def get_pending_videos(self):
         """Obtener videos pendientes de procesamiento (sin tarea_id)"""
-        with self.SessionLocal() as session:
+        with SessionLocal() as session:  # ✅ Usar SessionLocal importado
             result = session.execute(
                 select(ProcesamientoVideo)
                 .where(
                     ProcesamientoVideo.estado == 'pendiente',
-                    ProcesamientoVideo.tarea_id.is_(None)  # ✅ Solo los no asignados
+                    ProcesamientoVideo.tarea_id.is_(None)
                 )
-                .limit(5)  # Procesar en lotes pequeños
+                .limit(5)
             )
             return result.scalars().all()
     
     def claim_video_processing(self, procesamiento_id: str):
         """Marcar un video como siendo procesado (asignar tarea_id)"""
-        with self.SessionLocal() as session:
+        with SessionLocal() as session:
             tarea_id = str(uuid.uuid4())
             session.execute(
                 update(ProcesamientoVideo)
                 .where(ProcesamientoVideo.id == procesamiento_id)
                 .values(
                     estado='procesando',
-                    tarea_id=tarea_id,  # ✅ Worker asigna su propio ID
+                    tarea_id=tarea_id,
                     fecha_inicio=datetime.utcnow(),
                     intentos=ProcesamientoVideo.intentos + 1
                 )
@@ -89,7 +88,7 @@ class ProcessorService:
     
     def mark_video_completed(self, video_id: str, result: dict):
         """Marcar video como completado en S3"""
-        with self.SessionLocal() as session:
+        with SessionLocal() as session:
             # Actualizar ProcesamientoVideo
             session.execute(
                 update(ProcesamientoVideo)
@@ -119,7 +118,7 @@ class ProcessorService:
     
     def mark_video_failed(self, video_id: str, error_message: str):
         """Marcar video como fallado"""
-        with self.SessionLocal() as session:
+        with SessionLocal() as session:
             session.execute(
                 update(ProcesamientoVideo)
                 .where(ProcesamientoVideo.video_id == video_id)

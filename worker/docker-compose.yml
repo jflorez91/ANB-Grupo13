@@ -13,30 +13,6 @@ services:
     networks:
       - anb-worker-network
 
-  video-processor:
-    build:
-      context: .
-      dockerfile: Dockerfile.worker
-    container_name: anb-video-processor
-    restart: unless-stopped
-    environment:
-      - DATABASE_URL=mysql+pymysql://ANBAdmin:ANB12345@db-instance-anb.cra7zjgxuryo.us-east-1.rds.amazonaws.com:3306/anb_rising_stars
-      - REDIS_URL=redis://redis:6379/0
-      - UPLOAD_DIR=/storage/uploads
-      - PROCESSED_DIR=/storage/processed
-    volumes:
-      - /home/ubuntu/storage/uploads:/storage/uploads
-      - /home/ubuntu/storage/processed:/storage/processed
-    depends_on:
-      - redis
-    networks:
-      - anb-worker-network
-    healthcheck:
-      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
   celery-worker:
     build:
       context: .
@@ -46,6 +22,11 @@ services:
     environment:
       - DATABASE_URL=mysql+pymysql://ANBAdmin:ANB12345@db-instance-anb.cra7zjgxuryo.us-east-1.rds.amazonaws.com:3306/anb_rising_stars
       - REDIS_URL=redis://redis:6379/0
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
+      - AWS_REGION=us-east-1
+      - S3_BUCKET_NAME=anb-aws3-bucket
     command: >
       sh -c "celery -A app.workers.celery_app worker 
              --loglevel=info 
@@ -66,14 +47,40 @@ services:
     environment:
       - DATABASE_URL=mysql+pymysql://ANBAdmin:ANB12345@db-instance-anb.cra7zjgxuryo.us-east-1.rds.amazonaws.com:3306/anb_rising_stars
       - REDIS_URL=redis://redis:6379/0
-    command: >
-      sh -c "celery -A app.workers.celery_app beat 
-             --loglevel=info 
-             --schedule=/tmp/celerybeat-schedule"
+    command: celery -A app.workers.celery_app beat --loglevel=info --schedule=/tmp/celerybeat-schedule
     depends_on:
       - redis
     networks:
       - anb-worker-network
+
+  video-processor:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: anb-video-processor
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=mysql+pymysql://ANBAdmin:ANB12345@db-instance-anb.cra7zjgxuryo.us-east-1.rds.amazonaws.com:3306/anb_rising_stars
+      - REDIS_URL=redis://redis:6379/0
+      - UPLOAD_DIR=/storage/uploads
+      - PROCESSED_DIR=/storage/processed
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
+      - AWS_REGION=us-east-1
+      - S3_BUCKET_NAME=anb-aws3-bucket
+    volumes:
+      - /home/ubuntu/storage/uploads:/storage/uploads
+      - /home/ubuntu/storage/processed:/storage/processed
+    depends_on:
+      - redis
+    networks:
+      - anb-worker-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   redis_data:
