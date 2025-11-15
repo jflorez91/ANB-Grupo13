@@ -12,7 +12,9 @@ class Video(Base):
                        nullable=False, index=True)
     titulo = Column(String(255), nullable=False, index=True)
     archivo_original = Column(String(500), nullable=False, comment="Ruta en almacenamiento")
+    s3_url_original = Column(String(500), nullable=True, comment="URL S3 del archivo original")
     archivo_procesado = Column(String(500), nullable=True, comment="Ruta del video procesado")
+    s3_url_procesado = Column(String(500), nullable=True, comment="URL S3 del archivo procesado")
     duracion_original = Column(Integer, nullable=False, comment="Duración en segundos")
     duracion_procesada = Column(Integer, nullable=True, comment="Duración procesada en segundos")
     estado = Column(MySQLEnum('subido', 'procesando', 'procesado', 'error', name='video_estado'), 

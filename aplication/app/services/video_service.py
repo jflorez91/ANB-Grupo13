@@ -79,6 +79,7 @@ class VideoService:
                 video_id=video_id,
                 jugador_id=jugador.id,
                 video_data=video_data,
+                s3_key_original= s3_key_original,
                 file_path=file_url,
                 metadata=video_metadata,
                 original_filename=file.filename
@@ -315,7 +316,7 @@ class VideoService:
                 "formato": os.path.splitext(file_path)[1].lower().replace('.', '')
             }
 
-    async def _create_video_record(self, video_id: str, jugador_id: str, video_data: VideoCreate, 
+    async def _create_video_record(self, video_id: str, jugador_id: str, video_data: VideoCreate, s3_key_original:str, 
                                  file_path: str, metadata: dict, original_filename: str):
         
         
@@ -323,7 +324,8 @@ class VideoService:
             id=video_id,
             jugador_id=jugador_id,
             titulo=video_data.titulo,
-            archivo_original=file_path,
+            archivo_original= s3_key_original,
+            s3_url_original = file_path,
             duracion_original=metadata["duracion"],  # Duración real en segundos
             estado="subido",
             formato_original=metadata["formato"],
