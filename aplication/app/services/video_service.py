@@ -7,6 +7,7 @@ from sqlalchemy import select
 import logging
 import subprocess
 import json
+import asyncio
 
 from app.schemas.video import Video
 from app.schemas.jugador import Jugador
@@ -99,8 +100,12 @@ class VideoService:
                 }
 
                 # Enviar mensaje a SQS (los workers lo procesarán)
-                sqs_result = sqs_client_api.send_video_for_processing(sqs_data)
-
+                #sqs_result = sqs_client_api.send_video_for_processing(sqs_data)
+                sqs_result = await asyncio.get_event_loop().run_in_executor(
+                    None, 
+                    lambda: sqs_client_api.send_video_for_processing(sqs_data)
+                )
+                
                 if sqs_result["success"]:
                     logger.info(f"✅ Video {video_id} puesto en cola de procesamiento")
                 else:
