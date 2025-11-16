@@ -16,6 +16,7 @@ from app.core.storage import validate_video_file
 from app.config.settings import settings
 from app.workers.video_tasks import process_video_task
 from app.core.s3_client import s3_client
+from app.core.sqs_client import sqs_client_api
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +88,26 @@ class VideoService:
     
             # Crear registro de procesamiento
             await self._create_processing_record(video.id)
+
+            try:
+                sqs_data = {
+                    "video_id": video_id,
+                    "jugador_id": jugador.id,
+                    "s3_key_original": s3_key_original,
+                    "titulo": video_data.titulo,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+
+                # Enviar mensaje a SQS (los workers lo procesarán)
+                sqs_result = sqs_client_api.send_video_for_processing(sqs_data)
+
+                if sqs_result["success"]:
+                    logger.info(f"✅ Video {video_id} puesto en cola de procesamiento")
+                else:
+                    logger.warning(f"⚠️ Video guardado pero error en SQS: {sqs_result['error']}")
+
+            except Exception as e:
+                logger.error(f"⚠️ Error enviando a SQS: {str(e)}")
         
             #Preparar respuesta según especificación
             return VideoUploadResponse(
