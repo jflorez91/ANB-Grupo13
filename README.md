@@ -32,7 +32,11 @@
   - **Creación Bucket S3**
   - **Docuemntación arquitectura de aplicación**
   - **Plan de pruebas de estres, analisis y documentación**
-
+- **Semana 6**
+  - **Implementación de escalabilidad capa worker**
+  - **Implementación servicios SQS**
+  - **Docuemntación arquitectura de aplicación**
+  - **Plan de pruebas de estres, analisis y documentación**
 ## 🟩 Estructura de carpetas del Repo
 ```text
 ├───aplication
@@ -72,6 +76,7 @@ La documentación del proyecto lo puede encontrar en la ruta (/docs/Entrega_1) d
 - **Diagrama de componentes** (/docs/Entrega_1/Diagrama de componentes)
 - **Diagrama de flujo de procesos** (/docs/Entrega_1/Diagrama de flujo de procesos)
 - **Despliegue y documentación** (/aplication/app/ConsideracionesDespliegue)
+
 
 
 
