@@ -16,6 +16,17 @@ def process_pending_videos_task(self):
         logger.info("🔍 Buscando videos pendientes de procesamiento...")
         
         processor = ProcessorService()
+
+        pending_videos = processor.get_pending_videos()
+        
+        if not pending_videos:
+            logger.info("⏭️  No hay videos pendientes - saltando procesamiento")
+            return {
+                "status": "skipped",
+                "message": "No hay videos pendientes para procesar",
+                "pending_count": 0
+            }
+
         result = processor.process_pending_videos()  # ✅ MÉTODO CORREGIDO
         
         logger.info(f"✅ Procesamiento completado. Resultado: {result}")

@@ -30,8 +30,7 @@ services:
     command: >
       sh -c "celery -A app.workers.celery_app worker 
              --loglevel=info 
-             --concurrency=2 
-             --queues=video_processing,rankings"
+             --concurrency=2"
     depends_on:
       - redis
     networks:
