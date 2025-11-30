@@ -37,6 +37,18 @@
   - **Implementación servicios SQS**
   - **Documentación arquitectura de aplicación**
   - **Plan de pruebas de estres, analisis y documentación**
+## 🟧 Fase final
+- **Semana 7 y 8**
+  - **Configurar y desplegar la capa web con AWS ECS**
+  - **Configurar y desplegar la capa worker con AWS ECS**
+  - **Configurar un servicio de base de datos relacional**
+  - **Configurar un sistema de mensajería con los servicios de SQS**
+  - **Configurar el servicio de almacenamiento de objetos con S3**
+  - **Asegurar que la aplicación web cumpla con todos los requerimientos**
+  - **Configuración de alta dispoibilidad**
+  - **Documentación arquitectura de aplicación**
+  - **Plan de pruebas de estres, analisis y documentación**
+funcionales**
 ## 🟩 Estructura de carpetas del Repo
 ```text
 ├───aplication
@@ -76,6 +88,7 @@ La documentación del proyecto lo puede encontrar en la ruta (/docs/Entrega_1) d
 - **Diagrama de componentes** (/docs/Entrega_1/Diagrama de componentes)
 - **Diagrama de flujo de procesos** (/docs/Entrega_1/Diagrama de flujo de procesos)
 - **Despliegue y documentación** (/aplication/app/ConsideracionesDespliegue)
+
 
 
 
