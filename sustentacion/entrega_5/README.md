@@ -11,7 +11,7 @@
 ## Video de entrega
 - **Semana 7 y 8**
   
-[https://www.youtube.com/watch?v=-bOvWrIPFUE](https://youtu.be/AhQ-zr_c5yA)
+[https://www.youtube.com/watch?v=-bOvWrIPFUE](https://youtu.be/emWp7y9celw)
 
 ## Documentación entrega 5
 Para esta entrega se implementaron los servicios de autoescalado para los ambientes de tipo web y los ambientes de tipo worker, utilizando grupos de Auto Scaling.
